@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Sign In — ParkEase{% endblock %}
+
+{% block content %}
+<section class="auth-section py-5">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-md-8 col-lg-5 col-xl-4">
+        
+        <!-- Login Card -->
+        <div class="auth-card shadow-sm border rounded-4 bg-white p-4 p-sm-5">
+          <div class="text-center mb-4">
+            <div class="pe-brand-icon mx-auto mb-3" style="width: 48px; height: 48px; font-size: 1.6rem;">
+              <i class="bi bi-p-square-fill"></i>
+            </div>
+            <h2 class="fw-bold mb-1">Welcome Back</h2>
+            <p class="text-muted small">Sign in to access your bookings and smart parking spots.</p>
+          </div>
+
+          <!-- Authentication Non-field Errors (Invalid Credentials) -->
+          {% if form.non_field_errors %}
+            <div class="alert alert-danger py-2 px-3 mb-3 small rounded-3" role="alert">
+              {% for error in form.non_field_errors %}
+                <div class="d-flex align-items-center">
+                  <i class="bi bi-exclamation-triangle-fill me-2 flex-shrink-0"></i>
+                  <span>{{ error }}</span>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          <form method="post" action="{% url 'login' %}{% if request.GET.next %}?next={{ request.GET.next }}{% endif %}" novalidate>
+            {% csrf_token %}
+
+            <!-- Username Field -->
+            <div class="mb-3">
+              <label for="{{ form.username.id_for_label }}" class="form-label fw-semibold small text-secondary">
+                Username
+              </label>
+              <div class="input-group">
+                <span class="input-group-text bg-light text-muted border-end-0">
+                  <i class="bi bi-person"></i>
+                </span>
+                {{ form.username }}
+              </div>
+              {% if form.username.errors %}
+                {% for error in form.username.errors %}
+                  <div class="pe-field-error"><i class="bi bi-exclamation-circle-fill"></i> {{ error }}</div>
+                {% endfor %}
+              {% endif %}
+            </div>
+
+            <!-- Password Field -->
+            <div class="mb-4">
+              <div class="d-flex justify-content-between align-items-center">
+                <label for="{{ form.password.id_for_label }}" class="form-label fw-semibold small text-secondary mb-1">
+                  Password
+                </label>
+              </div>
+              <div class="input-group">
+                <span class="input-group-text bg-light text-muted border-end-0">
+                  <i class="bi bi-lock"></i>
+                </span>
+                {{ form.password }}
+              </div>
+              {% if form.password.errors %}
+                {% for error in form.password.errors %}
+                  <div class="pe-field-error"><i class="bi bi-exclamation-circle-fill"></i> {{ error }}</div>
+                {% endfor %}
+              {% endif %}
+            </div>
+
+            <!-- Submit Button -->
+            <div class="d-grid mb-3">
+              <button type="submit" class="btn btn-pe-primary btn-lg shadow-sm">
+                <i class="bi bi-box-arrow-in-right me-1"></i> Sign In
+              </button>
+            </div>
+          </form>
+
+          <div class="text-center pt-3 border-top mt-4">
+            <p class="small text-muted mb-2">
+              Don't have an account yet?
+              <a href="{% url 'register' %}" class="fw-semibold text-decoration-none text-success">Register now</a>
+            </p>
+            <p class="small text-muted mb-0">
+              <a href="{% url 'home' %}" class="text-secondary text-decoration-none">
+                <i class="bi bi-arrow-left me-1"></i> Back to Home
+              </a>
+            </p>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

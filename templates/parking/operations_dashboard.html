@@ -1,0 +1,658 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Parking Operations &amp; Admin Analytics — ParkEase{% endblock %}
+
+{% block extra_head %}
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<section class="py-4 bg-light">
+  <div class="container-fluid px-lg-4">
+
+    <!-- Page Header & Action Bar -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+      <div>
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb small mb-1">
+            <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Parking Operations</li>
+          </ol>
+        </nav>
+        <h1 class="h3 fw-bold text-dark mb-0">
+          <i class="bi bi-speedometer2 text-pe-primary me-2"></i>Parking Operations &amp; Admin Analytics
+        </h1>
+        <p class="text-muted small mb-0">Live facility utilization, driver check-in/out console, and revenue intelligence.</p>
+      </div>
+      <div class="d-flex gap-2">
+        <a href="{% url 'manage_locations' %}" class="btn btn-outline-pe-primary btn-sm">
+          <i class="bi bi-kanban me-1"></i> Manage Facilities
+        </a>
+        <a href="{% url 'operations_dashboard' %}" class="btn btn-pe-primary btn-sm">
+          <i class="bi bi-arrow-clockwise me-1"></i> Refresh Live Data
+        </a>
+      </div>
+    </div>
+
+    <!-- 1. Real-Time Operational Metrics Grid (9 Key Metrics) -->
+    <div class="row g-3 mb-4">
+      
+      <!-- Metric 1: Total Locations -->
+      <div class="col-sm-6 col-md-4 col-xl">
+        <div class="card border rounded-3 shadow-sm h-100 bg-white">
+          <div class="card-body p-3">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <span class="text-muted small fw-semibold text-uppercase">Total Facilities</span>
+                <h3 class="fw-bold text-dark mt-1 mb-0">{{ total_locations }}</h3>
+              </div>
+              <div class="pe-brand-icon bg-primary-subtle text-primary" style="width: 44px; height: 44px; font-size: 1.25rem;">
+                <i class="bi bi-building"></i>
+              </div>
+            </div>
+            <div class="small text-muted mt-2">
+              <span class="text-success fw-semibold">{{ active_locations }}</span> Active Facilities
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Metric 2: Total Bays -->
+      <div class="col-sm-6 col-md-4 col-xl">
+        <div class="card border rounded-3 shadow-sm h-100 bg-white">
+          <div class="card-body p-3">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <span class="text-muted small fw-semibold text-uppercase">Configured Bays</span>
+                <h3 class="fw-bold text-dark mt-1 mb-0">{{ total_slots }}</h3>
+              </div>
+              <div class="pe-brand-icon bg-info-subtle text-info" style="width: 44px; height: 44px; font-size: 1.25rem;">
+                <i class="bi bi-grid-3x3"></i>
+              </div>
+            </div>
+            <div class="small text-muted mt-2">
+              <span class="text-primary fw-semibold">{{ active_slots }}</span> Active Bays
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Metric 3: Live Available Bays -->
+      <div class="col-sm-6 col-md-4 col-xl">
+        <div class="card border rounded-3 shadow-sm h-100 bg-white">
+          <div class="card-body p-3">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <span class="text-muted small fw-semibold text-uppercase">Available Bays</span>
+                <h3 class="fw-bold text-success mt-1 mb-0">{{ total_available_slots }}</h3>
+              </div>
+              <div class="pe-brand-icon bg-success-subtle text-success" style="width: 44px; height: 44px; font-size: 1.25rem;">
+                <i class="bi bi-check2-circle"></i>
+              </div>
+            </div>
+            <div class="small text-muted mt-2">
+              Ready for immediate reservation
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Metric 4: Currently Occupied (Active) -->
+      <div class="col-sm-6 col-md-4 col-xl">
+        <div class="card border rounded-3 shadow-sm h-100 bg-white">
+          <div class="card-body p-3">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <span class="text-muted small fw-semibold text-uppercase">Occupied Bays</span>
+                <h3 class="fw-bold text-danger mt-1 mb-0">{{ occupied_bays_count }}</h3>
+              </div>
+              <div class="pe-brand-icon bg-danger-subtle text-danger" style="width: 44px; height: 44px; font-size: 1.25rem;">
+                <i class="bi bi-car-front-fill"></i>
+              </div>
+            </div>
+            <div class="small text-muted mt-2">
+              Vehicles parked inside
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Metric 5: Reserved Bays -->
+      <div class="col-sm-6 col-md-4 col-xl">
+        <div class="card border rounded-3 shadow-sm h-100 bg-white">
+          <div class="card-body p-3">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <span class="text-muted small fw-semibold text-uppercase">Reserved Bays</span>
+                <h3 class="fw-bold text-warning-emphasis mt-1 mb-0">{{ reserved_bays_count }}</h3>
+              </div>
+              <div class="pe-brand-icon bg-warning-subtle text-warning-emphasis" style="width: 44px; height: 44px; font-size: 1.25rem;">
+                <i class="bi bi-clock-history"></i>
+              </div>
+            </div>
+            <div class="small text-muted mt-2">
+              Pending vehicle arrival
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Metric 6: Active Sessions -->
+      <div class="col-sm-6 col-md-4 col-xl">
+        <div class="card border rounded-3 shadow-sm h-100 bg-white">
+          <div class="card-body p-3">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <span class="text-muted small fw-semibold text-uppercase">Active Sessions</span>
+                <h3 class="fw-bold text-primary mt-1 mb-0">{{ active_sessions_count }}</h3>
+              </div>
+              <div class="pe-brand-icon bg-primary-subtle text-primary" style="width: 44px; height: 44px; font-size: 1.25rem;">
+                <i class="bi bi-play-circle-fill"></i>
+              </div>
+            </div>
+            <div class="small text-muted mt-2">
+              Currently clocked-in
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Metric 7: Today's Completed Bookings -->
+      <div class="col-sm-6 col-md-4 col-xl">
+        <div class="card border rounded-3 shadow-sm h-100 bg-white">
+          <div class="card-body p-3">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <span class="text-muted small fw-semibold text-uppercase">Today Completed</span>
+                <h3 class="fw-bold text-dark mt-1 mb-0">{{ today_completed_count }}</h3>
+              </div>
+              <div class="pe-brand-icon bg-secondary-subtle text-secondary" style="width: 44px; height: 44px; font-size: 1.25rem;">
+                <i class="bi bi-check-all"></i>
+              </div>
+            </div>
+            <div class="small text-muted mt-2">
+              Checked out today
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Metric 8: Today's Revenue -->
+      <div class="col-sm-6 col-md-4 col-xl">
+        <div class="card border rounded-3 shadow-sm h-100 bg-white">
+          <div class="card-body p-3">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <span class="text-muted small fw-semibold text-uppercase">Today's Revenue</span>
+                <h3 class="fw-bold text-success mt-1 mb-0">₹{{ today_revenue }}</h3>
+              </div>
+              <div class="pe-brand-icon bg-success-subtle text-success" style="width: 44px; height: 44px; font-size: 1.25rem;">
+                <i class="bi bi-currency-rupee"></i>
+              </div>
+            </div>
+            <div class="small text-muted mt-2">
+              Realized from completed exits
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 2. Realized Revenue Summary Panel -->
+    <div class="card border rounded-4 shadow-sm bg-white mb-4">
+      <div class="card-header bg-white py-3 px-4 border-bottom">
+        <div class="d-flex align-items-center justify-content-between">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-cash-stack text-success fs-5"></i>
+            <h5 class="fw-bold text-dark mb-0">Realized Parking Revenue Summary</h5>
+          </div>
+          <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-1">
+            Realized Only (COMPLETED Exits)
+          </span>
+        </div>
+      </div>
+      <div class="card-body p-4">
+        <div class="row g-4 text-center">
+          <div class="col-6 col-md-3 border-end">
+            <div class="small text-muted text-uppercase fw-semibold mb-1">Today's Realized Revenue</div>
+            <div class="h3 fw-bold text-success mb-1">₹{{ today_revenue }}</div>
+            <small class="text-muted">{{ today_completed_count }} session(s) completed today</small>
+          </div>
+          <div class="col-6 col-md-3 border-end">
+            <div class="small text-muted text-uppercase fw-semibold mb-1">This Month's Revenue</div>
+            <div class="h3 fw-bold text-dark mb-1">₹{{ month_revenue }}</div>
+            <small class="text-muted">Current calendar month</small>
+          </div>
+          <div class="col-6 col-md-3 border-end">
+            <div class="small text-muted text-uppercase fw-semibold mb-1">Total Completed Revenue</div>
+            <div class="h3 fw-bold text-pe-primary mb-1">₹{{ total_completed_revenue }}</div>
+            <small class="text-muted">All-time realized revenue</small>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="small text-muted text-uppercase fw-semibold mb-1">Completed Sessions</div>
+            <div class="h3 fw-bold text-secondary mb-1">{{ total_completed_sessions }}</div>
+            <small class="text-muted">Total successful turnarounds</small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Visual Analytics (2 Responsive Charts via Chart.js) -->
+    <div class="row g-4 mb-4">
+      
+      <!-- Chart 1: Daily Revenue (Last 7 Days) -->
+      <div class="col-lg-7">
+        <div class="card border rounded-4 shadow-sm bg-white h-100">
+          <div class="card-header bg-white py-3 px-4 border-bottom d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-2">
+              <i class="bi bi-graph-up-arrow text-primary fs-5"></i>
+              <h5 class="fw-bold text-dark mb-0">Daily Revenue (Last 7 Days)</h5>
+            </div>
+            <span class="badge bg-light text-muted border small">INR (₹)</span>
+          </div>
+          <div class="card-body p-4">
+            <div style="position: relative; height: 280px; width: 100%;">
+              <canvas id="dailyRevenueChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chart 2: Booking Status Distribution -->
+      <div class="col-lg-5">
+        <div class="card border rounded-4 shadow-sm bg-white h-100">
+          <div class="card-header bg-white py-3 px-4 border-bottom d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-2">
+              <i class="bi bi-pie-chart text-info fs-5"></i>
+              <h5 class="fw-bold text-dark mb-0">Reservation Status Distribution</h5>
+            </div>
+            <span class="badge bg-light text-muted border small">All Bookings</span>
+          </div>
+          <div class="card-body p-4 d-flex align-items-center justify-content-center">
+            <div style="position: relative; height: 280px; width: 100%;">
+              <canvas id="statusDistributionChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 4. Parking Operations Management Table & Filters -->
+    <div class="card border rounded-4 shadow-sm bg-white mb-5">
+      
+      <!-- Table Header & Filter Bar -->
+      <div class="card-header bg-white py-3 px-4 border-bottom">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-table text-dark fs-5"></i>
+            <h5 class="fw-bold text-dark mb-0">Operational Reservations &amp; Bay Dispatch</h5>
+          </div>
+          <span class="badge bg-light text-secondary border px-3 py-1">
+            Showing {{ bookings|length }} of {{ page_obj.paginator.count }} Total Bookings
+          </span>
+        </div>
+      </div>
+
+      <!-- Filter Controls Form -->
+      <div class="p-3 bg-light border-bottom">
+        <form method="get" action="{% url 'operations_dashboard' %}" class="row g-2 align-items-end">
+          
+          <!-- Search Input -->
+          <div class="col-md-3">
+            <label class="form-label small fw-semibold text-muted mb-1">Search</label>
+            <div class="input-group input-group-sm">
+              <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
+              <input type="text" name="q" value="{{ search_query }}" class="form-control" placeholder="ID, Driver, Reg, Facility...">
+            </div>
+          </div>
+
+          <!-- Status Dropdown -->
+          <div class="col-sm-6 col-md-2">
+            <label class="form-label small fw-semibold text-muted mb-1">Status</label>
+            <select name="status" class="form-select form-select-sm">
+              <option value="">All Statuses</option>
+              {% for val, label in booking_statuses %}
+                <option value="{{ val }}" {% if selected_status == val %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Facility Dropdown -->
+          <div class="col-sm-6 col-md-3">
+            <label class="form-label small fw-semibold text-muted mb-1">Facility</label>
+            <select name="location" class="form-select form-select-sm">
+              <option value="">All Facilities</option>
+              {% for loc in all_locations %}
+                <option value="{{ loc.id }}" {% if selected_location == loc.id|stringformat:"s" %}selected{% endif %}>{{ loc.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Vehicle Type Dropdown -->
+          <div class="col-sm-6 col-md-2">
+            <label class="form-label small fw-semibold text-muted mb-1">Vehicle Type</label>
+            <select name="vehicle_type" class="form-select form-select-sm">
+              <option value="">All Types</option>
+              {% for val, label in vehicle_types %}
+                <option value="{{ val }}" {% if selected_vehicle_type == val %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="col-sm-6 col-md-2 d-flex gap-2">
+            <button type="submit" class="btn btn-sm btn-pe-primary flex-fill">
+              <i class="bi bi-funnel me-1"></i> Filter
+            </button>
+            <a href="{% url 'operations_dashboard' %}" class="btn btn-sm btn-outline-secondary" title="Reset Filters">
+              <i class="bi bi-x-circle"></i>
+            </a>
+          </div>
+
+        </form>
+      </div>
+
+      <!-- Reservations Table -->
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light text-uppercase small text-muted">
+            <tr>
+              <th scope="col" class="ps-4">Booking #</th>
+              <th scope="col">Driver</th>
+              <th scope="col">Facility &amp; Bay</th>
+              <th scope="col">Vehicle</th>
+              <th scope="col">Scheduled Window</th>
+              <th scope="col">Actual Timing</th>
+              <th scope="col">Status</th>
+              <th scope="col">Billed Fee</th>
+              <th scope="col" class="text-end pe-4">Operational Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if bookings %}
+              {% for b in bookings %}
+                <tr>
+                  <!-- Booking ID -->
+                  <td class="ps-4 fw-bold text-dark">
+                    <a href="{% url 'booking_detail' pk=b.pk %}" class="text-decoration-none text-pe-primary">
+                      #{{ b.id }}
+                    </a>
+                  </td>
+
+                  <!-- Driver -->
+                  <td>
+                    <div class="fw-semibold text-dark">{{ b.user.username }}</div>
+                    <small class="text-muted">{{ b.user.email }}</small>
+                  </td>
+
+                  <!-- Facility & Bay -->
+                  <td>
+                    <div class="fw-semibold text-dark">{{ b.location.name }}</div>
+                    <small class="badge bg-light text-dark border">
+                      Bay {{ b.slot.slot_number }} ({{ b.slot.get_slot_type_display }})
+                    </small>
+                  </td>
+
+                  <!-- Vehicle -->
+                  <td>
+                    <div class="fw-bold text-dark">{{ b.vehicle_number }}</div>
+                    <small class="text-muted">
+                      {% if b.vehicle_type == 'CAR' %}
+                        <i class="bi bi-car-front text-primary me-1"></i>Car
+                      {% else %}
+                        <i class="bi bi-bicycle text-success me-1"></i>Bike
+                      {% endif %}
+                    </small>
+                  </td>
+
+                  <!-- Scheduled Window -->
+                  <td class="small">
+                    <div>{{ b.start_time|date:"M d, H:i" }}</div>
+                    <div class="text-muted">&rarr; {{ b.end_time|date:"M d, H:i" }}</div>
+                  </td>
+
+                  <!-- Actual Timing -->
+                  <td class="small">
+                    {% if b.actual_entry_time %}
+                      <div class="text-success"><i class="bi bi-box-arrow-in-right me-1"></i>{{ b.actual_entry_time|date:"M d, H:i" }}</div>
+                      {% if b.actual_exit_time %}
+                        <div class="text-secondary"><i class="bi bi-box-arrow-right me-1"></i>{{ b.actual_exit_time|date:"M d, H:i" }}</div>
+                      {% else %}
+                        <span class="badge bg-success-subtle text-success border">Inside Bay</span>
+                      {% endif %}
+                    {% else %}
+                      <span class="text-muted">&mdash;</span>
+                    {% endif %}
+                  </td>
+
+                  <!-- Status Badge -->
+                  <td>
+                    {% if b.status == 'CONFIRMED' %}
+                      <span class="pe-status-badge pe-status-confirmed"><i class="bi bi-check2-circle"></i> Confirmed</span>
+                    {% elif b.status == 'ACTIVE' %}
+                      <span class="pe-status-badge pe-status-active"><i class="bi bi-play-circle-fill"></i> Active</span>
+                    {% elif b.status == 'COMPLETED' %}
+                      <span class="pe-status-badge pe-status-completed"><i class="bi bi-check-all"></i> Completed</span>
+                    {% elif b.status == 'CANCELLED' %}
+                      <span class="pe-status-badge pe-status-cancelled"><i class="bi bi-x-circle"></i> Cancelled</span>
+                    {% else %}
+                      <span class="pe-status-badge pe-status-pending">{{ b.get_status_display }}</span>
+                    {% endif %}
+                  </td>
+
+                  <!-- Billed / Estimated Amount -->
+                  <td>
+                    <span class="fw-bold {% if b.status == 'COMPLETED' %}text-success{% else %}text-dark{% endif %}">
+                      ₹{{ b.total_amount }}
+                    </span>
+                  </td>
+
+                  <!-- Staff Actions -->
+                  <td class="text-end pe-4">
+                    <div class="d-inline-flex gap-1">
+                      {% if b.status == 'CONFIRMED' %}
+                        <form method="post" action="{% url 'check_in_booking' pk=b.pk %}" class="d-inline" onsubmit="return confirm('Confirm check-in for vehicle {{ b.vehicle_number }}?');">
+                          {% csrf_token %}
+                          <button type="submit" class="btn btn-sm btn-success py-1 px-2" title="Perform Driver Check In">
+                            <i class="bi bi-box-arrow-in-right me-1"></i>Check In
+                          </button>
+                        </form>
+                      {% elif b.status == 'ACTIVE' %}
+                        <form method="post" action="{% url 'check_out_booking' pk=b.pk %}" class="d-inline" onsubmit="return confirm('Confirm check-out for vehicle {{ b.vehicle_number }}? Final fee will be billed based on actual duration.');">
+                          {% csrf_token %}
+                          <button type="submit" class="btn btn-sm btn-warning text-dark py-1 px-2" title="Perform Driver Check Out">
+                            <i class="bi bi-box-arrow-right me-1"></i>Check Out
+                          </button>
+                        </form>
+                      {% endif %}
+
+                      <a href="{% url 'booking_detail' pk=b.pk %}" class="btn btn-sm btn-outline-secondary py-1 px-2" title="View Full Pass">
+                        <i class="bi bi-eye"></i> Details
+                      </a>
+                    </div>
+                  </td>
+                </tr>
+              {% endfor %}
+            {% else %}
+              <tr>
+                <td colspan="9" class="text-center py-5">
+                  <div class="pe-empty-state">
+                    <div class="pe-empty-icon text-muted mb-2" style="font-size: 2.5rem;">
+                      <i class="bi bi-inbox"></i>
+                    </div>
+                    <h5 class="fw-bold text-dark mb-1">No reservations found</h5>
+                    <p class="text-muted small mb-0">No booking records match your current filter parameters or search query.</p>
+                  </div>
+                </td>
+              </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination Footer -->
+      {% if page_obj.has_other_pages %}
+        <div class="card-footer bg-white py-3 px-4 border-top">
+          <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <span class="small text-muted">
+              Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+            </span>
+            <nav aria-label="Bookings navigation">
+              <ul class="pagination pagination-sm mb-0">
+                {% if page_obj.has_previous %}
+                  <li class="page-item">
+                    <a class="page-link" href="?page=1{% if filter_querystring %}&{{ filter_querystring }}{% endif %}">&laquo; First</a>
+                  </li>
+                  <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if filter_querystring %}&{{ filter_querystring }}{% endif %}">Previous</a>
+                  </li>
+                {% else %}
+                  <li class="page-item disabled"><span class="page-link">&laquo; First</span></li>
+                  <li class="page-item disabled"><span class="page-link">Previous</span></li>
+                {% endif %}
+
+                {% for num in page_obj.paginator.page_range %}
+                  {% if num >= page_obj.number|add:"-2" and num <= page_obj.number|add:"2" %}
+                    {% if page_obj.number == num %}
+                      <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                    {% else %}
+                      <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}{% if filter_querystring %}&{{ filter_querystring }}{% endif %}">{{ num }}</a>
+                      </li>
+                    {% endif %}
+                  {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                  <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if filter_querystring %}&{{ filter_querystring }}{% endif %}">Next</a>
+                  </li>
+                  <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if filter_querystring %}&{{ filter_querystring }}{% endif %}">Last &raquo;</a>
+                  </li>
+                {% else %}
+                  <li class="page-item disabled"><span class="page-link">Next</span></li>
+                  <li class="page-item disabled"><span class="page-link">Last &raquo;</span></li>
+                {% endif %}
+              </ul>
+            </nav>
+          </div>
+        </div>
+      {% endif %}
+
+    </div>
+
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  // 1. Daily Revenue Chart Initialization
+  const revenueLabels = {{ daily_revenue_labels|safe }};
+  const revenueData = {{ daily_revenue_data|safe }};
+
+  const ctxRev = document.getElementById('dailyRevenueChart');
+  if (ctxRev) {
+    new Chart(ctxRev.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: revenueLabels,
+        datasets: [{
+          label: 'Revenue (₹)',
+          data: revenueData,
+          backgroundColor: 'rgba(25, 135, 84, 0.75)',
+          borderColor: 'rgb(25, 135, 84)',
+          borderWidth: 1.5,
+          borderRadius: 6,
+          maxBarThickness: 45
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                return 'Realized: ₹' + context.parsed.y.toFixed(2);
+              }
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: function(value) { return '₹' + value; },
+              precision: 0
+            },
+            grid: { color: 'rgba(0, 0, 0, 0.05)' }
+          },
+          x: {
+            grid: { display: false }
+          }
+        }
+      }
+    });
+  }
+
+  // 2. Booking Status Distribution Chart Initialization
+  const statusLabels = {{ status_labels|safe }};
+  const statusCounts = {{ status_counts|safe }};
+
+  const ctxStatus = document.getElementById('statusDistributionChart');
+  if (ctxStatus) {
+    new Chart(ctxStatus.getContext('2d'), {
+      type: 'doughnut',
+      data: {
+        labels: statusLabels,
+        datasets: [{
+          data: statusCounts,
+          backgroundColor: [
+            'rgba(13, 110, 253, 0.85)', // Confirmed (Primary Blue)
+            'rgba(25, 135, 84, 0.85)',  // Active (Success Green)
+            'rgba(108, 117, 125, 0.85)',// Completed (Secondary Gray)
+            'rgba(220, 53, 69, 0.85)'   // Cancelled (Danger Red)
+          ],
+          borderColor: '#ffffff',
+          borderWidth: 2,
+          hoverOffset: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              boxWidth: 12,
+              padding: 14
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                const count = context.parsed;
+                const pct = total > 0 ? ((count / total) * 100).toFixed(1) : 0;
+                return ` ${context.label}: ${count} (${pct}%)`;
+              }
+            }
+          }
+        },
+        cutout: '65%'
+      }
+    });
+  }
+});
+</script>
+{% endblock %}
+

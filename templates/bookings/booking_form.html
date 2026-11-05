@@ -1,0 +1,356 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Reserve a Parking Slot — ParkEase{% endblock %}
+
+{% block content %}
+<section class="py-5 bg-light">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-8 col-xl-7">
+
+        <!-- Breadcrumb Navigation -->
+        <nav aria-label="breadcrumb" class="mb-3">
+          <ol class="breadcrumb small">
+            <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'location_list' %}">Locations</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Book a Slot</li>
+          </ol>
+        </nav>
+
+        <!-- Booking Form Card -->
+        <div class="card border rounded-4 shadow-sm bg-white p-4 p-md-5">
+          <div class="d-flex align-items-center gap-3 mb-4 pb-3 border-bottom">
+            <div class="pe-brand-icon" style="width: 48px; height: 48px; font-size: 1.5rem;">
+              <i class="bi bi-calendar-check"></i>
+            </div>
+            <div>
+              <h2 class="h4 fw-bold text-dark mb-1">Reserve a Parking Slot</h2>
+              <small class="text-muted">Select facility, bay, vehicle, and reservation time window.</small>
+            </div>
+          </div>
+
+          <!-- Non-field Errors -->
+          {% if form.non_field_errors %}
+            <div class="alert alert-danger py-2 px-3 mb-3 small rounded-3" role="alert">
+              {% for error in form.non_field_errors %}
+                <div class="d-flex align-items-center">
+                  <i class="bi bi-exclamation-triangle-fill me-2 flex-shrink-0"></i>
+                  <span>{{ error }}</span>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          <form method="post" id="bookingForm" novalidate>
+            {% csrf_token %}
+
+            <!-- Parking Location -->
+            <div class="mb-3">
+              <label for="{{ form.location.id_for_label }}" class="form-label fw-semibold small text-secondary">
+                Parking Facility <span class="text-danger">*</span>
+              </label>
+              <div class="input-group">
+                <span class="input-group-text bg-light text-muted border-end-0">
+                  <i class="bi bi-building"></i>
+                </span>
+                {{ form.location }}
+              </div>
+              {% if form.location.errors %}
+                {% for error in form.location.errors %}
+                  <div class="pe-field-error"><i class="bi bi-exclamation-circle-fill"></i> {{ error }}</div>
+                {% endfor %}
+              {% else %}
+                <div class="form-text small text-muted">{{ form.location.help_text }}</div>
+              {% endif %}
+            </div>
+
+            <!-- Vehicle Type & Registration Number -->
+            <div class="row g-3 mb-3">
+              <div class="col-sm-5">
+                <label for="{{ form.vehicle_type.id_for_label }}" class="form-label fw-semibold small text-secondary">
+                  Vehicle Type <span class="text-danger">*</span>
+                </label>
+                <div class="input-group">
+                  <span class="input-group-text bg-light text-muted border-end-0">
+                    <i class="bi bi-car-front"></i>
+                  </span>
+                  {{ form.vehicle_type }}
+                </div>
+                {% if form.vehicle_type.errors %}
+                  {% for error in form.vehicle_type.errors %}
+                    <div class="pe-field-error"><i class="bi bi-exclamation-circle-fill"></i> {{ error }}</div>
+                  {% endfor %}
+                {% endif %}
+              </div>
+
+              <div class="col-sm-7">
+                <label for="{{ form.vehicle_number.id_for_label }}" class="form-label fw-semibold small text-secondary">
+                  Vehicle Number <span class="text-danger">*</span>
+                </label>
+                <div class="input-group">
+                  <span class="input-group-text bg-light text-muted border-end-0">
+                    <i class="bi bi-credit-card-2-front"></i>
+                  </span>
+                  {{ form.vehicle_number }}
+                </div>
+                {% if form.vehicle_number.errors %}
+                  {% for error in form.vehicle_number.errors %}
+                    <div class="pe-field-error"><i class="bi bi-exclamation-circle-fill"></i> {{ error }}</div>
+                  {% endfor %}
+                {% else %}
+                  <div class="form-text small text-muted">{{ form.vehicle_number.help_text }}</div>
+                {% endif %}
+              </div>
+            </div>
+
+            <!-- Time Window Schedule -->
+            <div class="row g-3 mb-3">
+              <div class="col-sm-6">
+                <label for="{{ form.start_time.id_for_label }}" class="form-label fw-semibold small text-secondary">
+                  Start Date &amp; Time <span class="text-danger">*</span>
+                </label>
+                <div class="input-group">
+                  <span class="input-group-text bg-light text-muted border-end-0">
+                    <i class="bi bi-clock"></i>
+                  </span>
+                  {{ form.start_time }}
+                </div>
+                {% if form.start_time.errors %}
+                  {% for error in form.start_time.errors %}
+                    <div class="pe-field-error"><i class="bi bi-exclamation-circle-fill"></i> {{ error }}</div>
+                  {% endfor %}
+                {% else %}
+                  <div class="form-text small text-muted">Must be in the future.</div>
+                {% endif %}
+              </div>
+
+              <div class="col-sm-6">
+                <label for="{{ form.end_time.id_for_label }}" class="form-label fw-semibold small text-secondary">
+                  End Date &amp; Time <span class="text-danger">*</span>
+                </label>
+                <div class="input-group">
+                  <span class="input-group-text bg-light text-muted border-end-0">
+                    <i class="bi bi-clock-history"></i>
+                  </span>
+                  {{ form.end_time }}
+                </div>
+                {% if form.end_time.errors %}
+                  {% for error in form.end_time.errors %}
+                    <div class="pe-field-error"><i class="bi bi-exclamation-circle-fill"></i> {{ error }}</div>
+                  {% endfor %}
+                {% else %}
+                  <div class="form-text small text-muted">Must be after start time.</div>
+                {% endif %}
+              </div>
+            </div>
+
+            <!-- Designated Parking Slot Dropdown -->
+            <div class="mb-4">
+              <label for="{{ form.slot.id_for_label }}" class="form-label fw-semibold small text-secondary">
+                Select Parking Bay <span class="text-danger">*</span>
+              </label>
+              <div class="input-group">
+                <span class="input-group-text bg-light text-muted border-end-0">
+                  <i class="bi bi-grid-3x3-gap"></i>
+                </span>
+                {{ form.slot }}
+              </div>
+              <div id="slotSpinner" class="small text-primary mt-1 d-none">
+                <div class="spinner-border spinner-border-sm me-1" role="status"></div>
+                <span>Checking live bay availability...</span>
+              </div>
+              <div id="slotFeedbackMessage" class="mt-1 d-none"></div>
+              {% if form.slot.errors %}
+                {% for error in form.slot.errors %}
+                  <div class="pe-field-error"><i class="bi bi-exclamation-circle-fill"></i> {{ error }}</div>
+                {% endfor %}
+              {% else %}
+                <div class="form-text small text-muted" id="slotHelpText">
+                  Only non-overlapping bays matching your vehicle type are shown.
+                </div>
+              {% endif %}
+            </div>
+
+            <!-- Dynamic Estimated Fee Summary Banner -->
+            <div class="p-3 bg-light rounded-3 border mb-4" id="feeBanner">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <div class="small text-muted mb-0">Estimated Parking Charge</div>
+                  <small class="text-secondary" id="feeCalculationDetail">Select facility and time window to preview fee.</small>
+                </div>
+                <div class="text-end">
+                  <span class="h4 fw-bold text-success mb-0" id="estimatedTotal">₹0.00</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="d-flex justify-content-end gap-2 pt-2 border-top">
+              <a href="{% url 'location_list' %}" class="btn btn-outline-secondary px-4">
+                Cancel
+              </a>
+              <button type="submit" class="btn btn-pe-accent btn-lg px-4 shadow-sm">
+                <i class="bi bi-check2-circle me-1"></i> Confirm Reservation
+              </button>
+            </div>
+
+          </form>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const locationSelect = document.getElementById('id_location');
+  const vehicleTypeSelect = document.getElementById('id_vehicle_type');
+  const startTimeInput = document.getElementById('id_start_time');
+  const endTimeInput = document.getElementById('id_end_time');
+  const slotSelect = document.getElementById('id_slot');
+  const slotSpinner = document.getElementById('slotSpinner');
+  const slotFeedbackMessage = document.getElementById('slotFeedbackMessage');
+  const feeCalculationDetail = document.getElementById('feeCalculationDetail');
+  const estimatedTotal = document.getElementById('estimatedTotal');
+
+  let currentHourlyRate = 0;
+
+  // Initialize browser date constraints (cannot select dates in the past)
+  const now = new Date();
+  now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+  const nowIso = now.toISOString().slice(0, 16);
+  if (startTimeInput && !startTimeInput.value) {
+    startTimeInput.min = nowIso;
+  }
+
+  function updateSlotsAndFee() {
+    const locationId = locationSelect.value;
+    const vehicleType = vehicleTypeSelect.value;
+    const startTime = startTimeInput.value;
+    const endTime = endTimeInput.value;
+
+    if (slotFeedbackMessage) {
+      slotFeedbackMessage.classList.add('d-none');
+      slotFeedbackMessage.innerHTML = '';
+    }
+
+    if (!locationId) {
+      currentHourlyRate = 0;
+      updateFeeDisplay(0);
+      slotSelect.disabled = false;
+      return;
+    }
+
+    // Show loading spinner & set loading state on dropdown
+    if (slotSpinner) slotSpinner.classList.remove('d-none');
+    slotSelect.disabled = true;
+
+    const params = new URLSearchParams({
+      location_id: locationId,
+      vehicle_type: vehicleType,
+      start_time: startTime || '',
+      end_time: endTime || ''
+    });
+
+    fetch(`{% url 'available_slots' %}?${params.toString()}`)
+      .then(response => response.json())
+      .then(data => {
+        if (slotSpinner) slotSpinner.classList.add('d-none');
+        slotSelect.disabled = false;
+
+        currentHourlyRate = data.hourly_rate || 0;
+
+        // Remember currently selected slot if any
+        const selectedSlotVal = slotSelect.value;
+        slotSelect.innerHTML = '<option value="">— Select Parking Bay —</option>';
+
+        if (data.slots && data.slots.length > 0) {
+          data.slots.forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s.id;
+            opt.textContent = `Bay ${s.slot_number} (${s.slot_type})`;
+            if (String(s.id) === String(selectedSlotVal)) {
+              opt.selected = true;
+            }
+            slotSelect.appendChild(opt);
+          });
+        } else {
+          const opt = document.createElement('option');
+          opt.value = '';
+          opt.textContent = '— No bays available for selected criteria —';
+          slotSelect.appendChild(opt);
+
+          if (slotFeedbackMessage) {
+            slotFeedbackMessage.innerHTML = '<div class="alert alert-warning py-2 px-3 small rounded-3 mb-0"><i class="bi bi-info-circle-fill me-1"></i> No bays are currently free for this vehicle type in the chosen time window. Please try adjusting your schedule.</div>';
+            slotFeedbackMessage.classList.remove('d-none');
+          }
+        }
+
+        calculateFee();
+      })
+      .catch(err => {
+        if (slotSpinner) slotSpinner.classList.add('d-none');
+        slotSelect.disabled = false;
+        console.error('Failed to fetch slots:', err);
+      });
+  }
+
+  function calculateFee() {
+    const startVal = startTimeInput.value;
+    const endVal = endTimeInput.value;
+
+    if (startVal && endTimeInput) {
+      endTimeInput.min = startVal;
+    }
+
+    if (!startVal || !endVal || !currentHourlyRate) {
+      updateFeeDisplay(0);
+      return;
+    }
+
+    const startDate = new Date(startVal);
+    const endDate = new Date(endVal);
+
+    if (endDate <= startDate) {
+      updateFeeDisplay(0, 'End time must be after start time.');
+      return;
+    }
+
+    const durationMs = endDate - startDate;
+    const durationHours = durationMs / (1000 * 60 * 60);
+    const total = durationHours * currentHourlyRate;
+
+    const hours = Math.floor(durationHours);
+    const minutes = Math.round((durationHours - hours) * 60);
+
+    const timeStr = `${hours}h ${minutes > 0 ? minutes + 'm' : ''} at ₹${currentHourlyRate}/hr`;
+    updateFeeDisplay(total.toFixed(2), timeStr);
+  }
+
+  function updateFeeDisplay(amount, detailText) {
+    if (estimatedTotal) {
+      estimatedTotal.textContent = `₹${parseFloat(amount || 0).toFixed(2)}`;
+    }
+    if (feeCalculationDetail) {
+      feeCalculationDetail.textContent = detailText || 'Select facility and time window to preview fee.';
+    }
+  }
+
+  // Attach event listeners for real-time updates
+  locationSelect.addEventListener('change', updateSlotsAndFee);
+  vehicleTypeSelect.addEventListener('change', updateSlotsAndFee);
+  startTimeInput.addEventListener('change', updateSlotsAndFee);
+  endTimeInput.addEventListener('change', updateSlotsAndFee);
+
+  // Trigger initial fetch if location is already selected (e.g. from query param)
+  if (locationSelect.value) {
+    updateSlotsAndFee();
+  }
+});
+</script>
+{% endblock %}
+

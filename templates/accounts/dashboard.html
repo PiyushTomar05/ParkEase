@@ -1,0 +1,530 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if is_staff_dashboard %}Staff Dashboard — ParkEase{% else %}Dashboard — ParkEase{% endif %}{% endblock %}
+
+{% block content %}
+<section class="dashboard-section py-4 py-lg-5">
+  <div class="container">
+    
+    <!-- User Welcome Header Banner -->
+    <div class="dashboard-welcome-card p-4 p-md-5 rounded-4 shadow-sm mb-4 text-white">
+      <div class="row align-items-center g-4">
+        <div class="col-lg-8">
+          {% if is_staff_dashboard %}
+            {% if is_superuser %}
+              <span class="badge bg-danger-subtle text-white rounded-pill px-3 py-1 mb-2 fw-semibold border border-danger-subtle">
+                <i class="bi bi-shield-lock-fill me-1"></i> System Administration
+              </span>
+            {% else %}
+              <span class="badge bg-primary-subtle text-white rounded-pill px-3 py-1 mb-2 fw-semibold border border-primary-subtle">
+                <i class="bi bi-shield-shaded me-1"></i> Parking Staff Operations
+              </span>
+            {% endif %}
+            <h1 class="h2 fw-bold text-white mb-2">
+              Welcome back, {{ user.username }}!
+            </h1>
+            <p class="text-white-50 mb-3">
+              Monitor real-time parking operations, manage locations and parking bays, and track live bookings across the network.
+            </p>
+            <div class="d-flex flex-wrap gap-2">
+              <a href="{% url 'operations_dashboard' %}" class="btn btn-pe-accent btn-sm px-3 shadow-sm">
+                <i class="bi bi-speedometer2 me-1"></i> Parking Operations
+              </a>
+              <a href="{% url 'manage_locations' %}" class="btn btn-outline-light btn-sm px-3">
+                <i class="bi bi-kanban me-1"></i> Manage Parking
+              </a>
+              {% if is_superuser %}
+                <a href="{% url 'admin:index' %}" class="btn btn-light btn-sm px-3 text-dark fw-semibold">
+                  <i class="bi bi-gear-fill me-1"></i> Django Admin
+                </a>
+              {% endif %}
+            </div>
+          {% else %}
+            <span class="badge bg-success-subtle text-success-emphasis rounded-pill px-3 py-1 mb-2 fw-semibold">
+              <i class="bi bi-shield-check me-1"></i> Driver Portal
+            </span>
+            <h1 class="h2 fw-bold text-white mb-2">
+              Welcome back, {{ user.username }}!
+            </h1>
+            <p class="text-white-50 mb-3">
+              Manage your parking reservations, view your active slots, and inspect your booking records.
+            </p>
+            <div class="d-flex flex-wrap gap-2">
+              <a href="{% url 'location_list' %}" class="btn btn-pe-accent btn-sm px-3 shadow-sm">
+                <i class="bi bi-geo-alt-fill me-1"></i> Find Parking
+              </a>
+              <a href="{% url 'my_bookings' %}" class="btn btn-outline-light btn-sm px-3">
+                <i class="bi bi-journal-text me-1"></i> My Bookings
+              </a>
+              <a href="{% url 'create_booking' %}" class="btn btn-light btn-sm px-3 text-dark fw-semibold">
+                <i class="bi bi-calendar-plus me-1"></i> Book a Slot
+              </a>
+            </div>
+          {% endif %}
+        </div>
+        <div class="col-lg-4 text-lg-end">
+          <div class="p-3 rounded-3 bg-white bg-opacity-10 backdrop-blur d-inline-block text-start">
+            <div class="small text-white-50 mb-1">
+              {% if is_staff_dashboard %}
+                {% if is_superuser %}System Administrator{% else %}Staff Administrator{% endif %}
+              {% else %}
+                Verified Driver Account
+              {% endif %}
+            </div>
+            <div class="fw-semibold text-white"><i class="bi bi-envelope me-1"></i> {{ user.email }}</div>
+            <div class="small text-white-50 mt-1"><i class="bi bi-calendar3 me-1"></i> Member since {{ user.date_joined|date:"M d, Y" }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Statistics Row -->
+    <div class="row g-3 mb-4">
+      {% if is_staff_dashboard %}
+        <div class="col-sm-6 col-lg-3">
+          <div class="stat-card p-3 p-md-4 rounded-4 bg-white border shadow-sm h-100">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <span class="small text-muted fw-semibold">System Bookings</span>
+              <div class="stat-icon-box bg-primary-subtle text-primary">
+                <i class="bi bi-receipt"></i>
+              </div>
+            </div>
+            <h3 class="fw-bold mb-0 text-dark">{{ total_bookings }}</h3>
+            <small class="text-muted">Total across all facilities</small>
+          </div>
+        </div>
+
+        <div class="col-sm-6 col-lg-3">
+          <div class="stat-card p-3 p-md-4 rounded-4 bg-white border shadow-sm h-100">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <span class="small text-muted fw-semibold">Active Sessions</span>
+              <div class="stat-icon-box bg-success-subtle text-success">
+                <i class="bi bi-play-circle-fill"></i>
+              </div>
+            </div>
+            <h3 class="fw-bold mb-0 text-success">{{ active_count }}</h3>
+            <small class="text-muted">Vehicles currently parked</small>
+          </div>
+        </div>
+
+        <div class="col-sm-6 col-lg-3">
+          <div class="stat-card p-3 p-md-4 rounded-4 bg-white border shadow-sm h-100">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <span class="small text-muted fw-semibold">Upcoming Arrivals</span>
+              <div class="stat-icon-box bg-warning-subtle text-warning">
+                <i class="bi bi-clock-history"></i>
+              </div>
+            </div>
+            <h3 class="fw-bold mb-0 text-warning">{{ upcoming_count }}</h3>
+            <small class="text-muted">Confirmed future bookings</small>
+          </div>
+        </div>
+
+        <div class="col-sm-6 col-lg-3">
+          <div class="stat-card p-3 p-md-4 rounded-4 bg-white border shadow-sm h-100">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <span class="small text-muted fw-semibold">Managed Facilities</span>
+              <div class="stat-icon-box bg-info-subtle text-info">
+                <i class="bi bi-buildings"></i>
+              </div>
+            </div>
+            <h3 class="fw-bold mb-0 text-dark">{{ active_locations }} <span class="fs-6 fw-normal text-muted">/ {{ total_locations }} active</span></h3>
+            <small class="text-muted">{{ active_slots }} active parking bays</small>
+          </div>
+        </div>
+      {% else %}
+        <div class="col-sm-6 col-lg-3">
+          <div class="stat-card p-3 p-md-4 rounded-4 bg-white border shadow-sm h-100">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <span class="small text-muted fw-semibold">Total Bookings</span>
+              <div class="stat-icon-box bg-primary-subtle text-primary">
+                <i class="bi bi-receipt"></i>
+              </div>
+            </div>
+            <h3 class="fw-bold mb-0 text-dark">{{ total_bookings }}</h3>
+            <small class="text-muted">All-time reservations</small>
+          </div>
+        </div>
+
+        <div class="col-sm-6 col-lg-3">
+          <div class="stat-card p-3 p-md-4 rounded-4 bg-white border shadow-sm h-100">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <span class="small text-muted fw-semibold">Active Bookings</span>
+              <div class="stat-icon-box bg-success-subtle text-success">
+                <i class="bi bi-check2-circle"></i>
+              </div>
+            </div>
+            <h3 class="fw-bold mb-0 text-success">{{ active_count }}</h3>
+            <small class="text-muted">Currently parked vehicles</small>
+          </div>
+        </div>
+
+        <div class="col-sm-6 col-lg-3">
+          <div class="stat-card p-3 p-md-4 rounded-4 bg-white border shadow-sm h-100">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <span class="small text-muted fw-semibold">Upcoming</span>
+              <div class="stat-icon-box bg-warning-subtle text-warning">
+                <i class="bi bi-clock-history"></i>
+              </div>
+            </div>
+            <h3 class="fw-bold mb-0 text-warning">{{ upcoming_count }}</h3>
+            <small class="text-muted">Scheduled reservations</small>
+          </div>
+        </div>
+
+        <div class="col-sm-6 col-lg-3">
+          <div class="stat-card p-3 p-md-4 rounded-4 bg-white border shadow-sm h-100">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <span class="small text-muted fw-semibold">Account Role</span>
+              <div class="stat-icon-box bg-info-subtle text-info">
+                <i class="bi bi-person-badge"></i>
+              </div>
+            </div>
+            <h5 class="fw-bold mb-0 text-dark">Standard Driver</h5>
+            <small class="text-muted">Verified driver account</small>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Main Dashboard Row -->
+    <div class="row g-4" id="bookings-section">
+      {% if is_staff_dashboard %}
+        <!-- Staff Operations Main Column -->
+        <div class="col-lg-8">
+          <div class="card border rounded-4 shadow-sm bg-white h-100">
+            <div class="card-header bg-white border-bottom py-3 px-4 d-flex justify-content-between align-items-center">
+              <h5 class="fw-bold mb-0 text-dark">
+                <i class="bi bi-activity me-2 text-primary"></i> System-Wide Recent Bookings
+              </h5>
+              <span class="badge bg-light text-secondary border">{{ total_bookings }} Recorded</span>
+            </div>
+
+            <div class="card-body p-4">
+              {% if total_bookings == 0 %}
+                <div class="pe-empty-state">
+                  <div class="pe-empty-icon">
+                    <i class="bi bi-calendar-x"></i>
+                  </div>
+                  <h4 class="pe-empty-title">No System Bookings Recorded</h4>
+                  <p class="pe-empty-text">
+                    There are no customer reservations recorded across any managed facilities yet.
+                  </p>
+                  <div class="d-flex flex-wrap justify-content-center gap-2">
+                    <a href="{% url 'manage_locations' %}" class="btn btn-pe-accent px-4 shadow-sm">
+                      <i class="bi bi-kanban me-1"></i> Manage Facilities
+                    </a>
+                  </div>
+                </div>
+              {% else %}
+                <div class="table-responsive">
+                  <table class="table align-middle table-hover mb-0">
+                    <thead class="table-light small text-secondary">
+                      <tr>
+                        <th scope="col" class="ps-3">Booking #</th>
+                        <th scope="col">Driver</th>
+                        <th scope="col">Location & Bay</th>
+                        <th scope="col">Vehicle</th>
+                        <th scope="col">Schedule</th>
+                        <th scope="col">Status</th>
+                        <th scope="col" class="text-end pe-3">Fee</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for b in recent_system_bookings %}
+                        <tr>
+                          <td class="ps-3 fw-semibold">
+                            <a href="{% url 'booking_detail' pk=b.id %}" class="text-decoration-none fw-bold text-pe-primary">
+                              #{{ b.id }}
+                            </a>
+                          </td>
+                          <td>
+                            <div class="fw-semibold text-dark">{{ b.user.username }}</div>
+                            <small class="text-muted">{{ b.user.email|default:"No email" }}</small>
+                          </td>
+                          <td>
+                            <div class="fw-semibold text-dark">{{ b.location.name }}</div>
+                            <small class="text-muted">Bay {{ b.slot.slot_number }}</small>
+                          </td>
+                          <td>
+                            <div class="fw-semibold text-dark">{{ b.vehicle_number }}</div>
+                            <small class="badge bg-light text-secondary border">{{ b.get_vehicle_type_display }}</small>
+                          </td>
+                          <td>
+                            <div class="small text-dark fw-semibold">{{ b.start_time|date:"M d, Y" }}</div>
+                            <small class="text-muted">{{ b.start_time|time:"H:i" }} &rarr; {{ b.end_time|time:"H:i" }}</small>
+                          </td>
+                          <td>
+                            {% if b.status == 'ACTIVE' %}
+                              <span class="pe-status-badge pe-status-active"><i class="bi bi-play-circle-fill"></i> Active</span>
+                            {% elif b.status == 'CONFIRMED' %}
+                              <span class="pe-status-badge pe-status-confirmed"><i class="bi bi-check2-circle"></i> Confirmed</span>
+                            {% elif b.status == 'COMPLETED' %}
+                              <span class="pe-status-badge pe-status-completed"><i class="bi bi-check-all"></i> Completed</span>
+                            {% elif b.status == 'CANCELLED' %}
+                              <span class="pe-status-badge pe-status-cancelled"><i class="bi bi-x-circle"></i> Cancelled</span>
+                            {% else %}
+                              <span class="pe-status-badge pe-status-pending">{{ b.get_status_display }}</span>
+                            {% endif %}
+                          </td>
+                          <td class="fw-bold text-dark text-end pe-3">₹{{ b.total_amount }}</td>
+                        </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              {% endif %}
+            </div>
+
+            <div class="card-footer bg-light border-top py-3 px-4 d-flex justify-content-between align-items-center">
+              <span class="small text-muted">Showing up to 6 recent system reservations</span>
+              <a href="{% url 'operations_dashboard' %}" class="text-decoration-none small fw-semibold text-pe-primary">
+                Open Full Operations Dashboard <i class="bi bi-arrow-right ms-1"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Staff Sidebar Column -->
+        <div class="col-lg-4">
+          <!-- Profile Card -->
+          <div class="card border rounded-4 shadow-sm bg-white mb-4">
+            <div class="card-header bg-white border-bottom py-3 px-4">
+              <h5 class="fw-bold mb-0 text-dark">
+                <i class="bi bi-person-lines-fill me-2 text-primary"></i> Administrative Profile
+              </h5>
+            </div>
+            <div class="card-body p-4">
+              <div class="d-flex align-items-center gap-3 mb-4">
+                <div class="pe-brand-icon" style="width: 52px; height: 52px; font-size: 1.6rem;">
+                  <i class="bi bi-person-badge-fill"></i>
+                </div>
+                <div>
+                  <h5 class="fw-bold mb-0 text-dark">{{ user.username }}</h5>
+                  <small class="text-muted">{{ user.email }}</small>
+                </div>
+              </div>
+
+              <ul class="list-group list-group-flush border-top border-bottom mb-4">
+                <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-2 small">
+                  <span class="text-muted">Username</span>
+                  <span class="fw-semibold text-dark">{{ user.username }}</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-2 small">
+                  <span class="text-muted">Email</span>
+                  <span class="fw-semibold text-dark">{{ user.email }}</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-2 small">
+                  <span class="text-muted">Registered On</span>
+                  <span class="fw-semibold text-dark">{{ user.date_joined|date:"M d, Y" }}</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-2 small">
+                  <span class="text-muted">Role</span>
+                  <span class="badge {% if is_superuser %}bg-danger-subtle text-danger{% else %}bg-primary-subtle text-primary{% endif %} border">
+                    {% if is_superuser %}System Administrator{% else %}Staff Administrator{% endif %}
+                  </span>
+                </li>
+              </ul>
+
+              <div class="d-grid gap-2">
+                <a href="{% url 'operations_dashboard' %}" class="btn btn-pe-accent btn-sm shadow-sm">
+                  <i class="bi bi-speedometer2 me-1"></i> Parking Operations Dashboard
+                </a>
+                <a href="{% url 'manage_locations' %}" class="btn btn-outline-pe-primary btn-sm">
+                  <i class="bi bi-kanban me-1"></i> Manage Parking Facilities
+                </a>
+                {% if is_superuser %}
+                  <a href="{% url 'admin:index' %}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-gear-fill me-1"></i> Django Admin Portal
+                  </a>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <!-- Personal Driver Actions Separated Card -->
+          <div class="card border rounded-4 shadow-sm bg-white">
+            <div class="card-header bg-white border-bottom py-3 px-4">
+              <h6 class="fw-bold mb-0 text-dark">
+                <i class="bi bi-car-front-fill me-2 text-secondary"></i> Personal Driver Actions
+              </h6>
+            </div>
+            <div class="card-body p-4">
+              <p class="small text-muted mb-3">
+                Need to park your own vehicle? Access your personal reservations or book a parking bay below.
+              </p>
+              <div class="p-3 bg-light rounded-3 mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-1 small">
+                  <span class="text-muted">Personal Bookings:</span>
+                  <span class="fw-bold text-dark">{{ personal_total_bookings }}</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center small">
+                  <span class="text-muted">Active Sessions:</span>
+                  <span class="fw-bold text-success">{{ personal_active_count }}</span>
+                </div>
+              </div>
+              <div class="d-grid gap-2">
+                <a href="{% url 'my_bookings' %}" class="btn btn-outline-secondary btn-sm text-start">
+                  <i class="bi bi-journal-text me-2"></i> My Personal Bookings
+                </a>
+                <a href="{% url 'create_booking' %}" class="btn btn-outline-secondary btn-sm text-start">
+                  <i class="bi bi-calendar-plus me-2"></i> Book a Personal Slot
+                </a>
+                <a href="{% url 'location_list' %}" class="btn btn-outline-secondary btn-sm text-start">
+                  <i class="bi bi-geo-alt me-2"></i> Browse All Parking Locations
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      {% else %}
+        <!-- Standard Driver Main Column -->
+        <div class="col-lg-8">
+          <div class="card border rounded-4 shadow-sm bg-white h-100">
+            <div class="card-header bg-white border-bottom py-3 px-4 d-flex justify-content-between align-items-center">
+              <h5 class="fw-bold mb-0 text-dark">
+                <i class="bi bi-calendar2-range me-2 text-success"></i> My Bookings Overview
+              </h5>
+              <span class="badge bg-light text-secondary border">{{ total_bookings }} Total</span>
+            </div>
+
+            <div class="card-body p-4">
+              {% if total_bookings == 0 %}
+                <!-- Friendly Empty State -->
+                <div class="pe-empty-state">
+                  <div class="pe-empty-icon">
+                    <i class="bi bi-calendar-x"></i>
+                  </div>
+                  <h4 class="pe-empty-title">No Parking Bookings Yet</h4>
+                  <p class="pe-empty-text">
+                    You haven't reserved any parking spots yet. When you make a booking, your active parking slot passes and receipts will appear here.
+                  </p>
+                  <div class="d-flex flex-wrap justify-content-center gap-2">
+                    <a href="{% url 'create_booking' %}" class="btn btn-pe-accent px-4 shadow-sm">
+                      <i class="bi bi-calendar-plus me-1"></i> Book a Slot
+                    </a>
+                    <a href="{% url 'location_list' %}" class="btn btn-outline-pe-primary px-3">
+                      <i class="bi bi-geo-alt me-1"></i> Find Parking
+                    </a>
+                  </div>
+                </div>
+              {% else %}
+                <!-- Active/Recent Bookings Table -->
+                <div class="table-responsive">
+                  <table class="table align-middle table-hover mb-0">
+                    <thead class="table-light small text-secondary">
+                      <tr>
+                        <th scope="col" class="ps-3">Booking #</th>
+                        <th scope="col">Location & Bay</th>
+                        <th scope="col">Vehicle</th>
+                        <th scope="col">Schedule</th>
+                        <th scope="col">Status</th>
+                        <th scope="col" class="text-end pe-3">Fee</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for b in recent_bookings %}
+                        <tr>
+                          <td class="ps-3 fw-semibold">
+                            <a href="{% url 'booking_detail' pk=b.id %}" class="text-decoration-none fw-bold text-pe-primary">
+                              #{{ b.id }}
+                            </a>
+                          </td>
+                          <td>
+                            <div class="fw-semibold text-dark">{{ b.location.name }}</div>
+                            <small class="text-muted">Bay {{ b.slot.slot_number }} ({{ b.slot.get_slot_type_display }})</small>
+                          </td>
+                          <td>
+                            <div class="fw-semibold text-dark">{{ b.vehicle_number }}</div>
+                            <small class="badge bg-light text-secondary border">{{ b.get_vehicle_type_display }}</small>
+                          </td>
+                          <td>
+                            <div class="small text-dark fw-semibold">{{ b.start_time|date:"M d, Y" }}</div>
+                            <small class="text-muted">{{ b.start_time|time:"H:i" }} &rarr; {{ b.end_time|time:"H:i" }}</small>
+                          </td>
+                          <td>
+                            {% if b.status == 'ACTIVE' %}
+                              <span class="pe-status-badge pe-status-active"><i class="bi bi-play-circle-fill"></i> Active</span>
+                            {% elif b.status == 'CONFIRMED' %}
+                              <span class="pe-status-badge pe-status-confirmed"><i class="bi bi-check2-circle"></i> Confirmed</span>
+                            {% elif b.status == 'COMPLETED' %}
+                              <span class="pe-status-badge pe-status-completed"><i class="bi bi-check-all"></i> Completed</span>
+                            {% elif b.status == 'CANCELLED' %}
+                              <span class="pe-status-badge pe-status-cancelled"><i class="bi bi-x-circle"></i> Cancelled</span>
+                            {% else %}
+                              <span class="pe-status-badge pe-status-pending">{{ b.get_status_display }}</span>
+                            {% endif %}
+                          </td>
+                          <td class="fw-bold text-dark text-end pe-3">₹{{ b.total_amount }}</td>
+                        </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Driver Sidebar Column -->
+        <div class="col-lg-4">
+          <div class="card border rounded-4 shadow-sm bg-white mb-4">
+            <div class="card-header bg-white border-bottom py-3 px-4">
+              <h5 class="fw-bold mb-0 text-dark">
+                <i class="bi bi-person-lines-fill me-2 text-primary"></i> Profile Information
+              </h5>
+            </div>
+            <div class="card-body p-4">
+              <div class="d-flex align-items-center gap-3 mb-4">
+                <div class="pe-brand-icon" style="width: 52px; height: 52px; font-size: 1.6rem;">
+                  <i class="bi bi-person-fill"></i>
+                </div>
+                <div>
+                  <h5 class="fw-bold mb-0 text-dark">{{ user.username }}</h5>
+                  <small class="text-muted">{{ user.email }}</small>
+                </div>
+              </div>
+
+              <ul class="list-group list-group-flush border-top border-bottom mb-4">
+                <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-2 small">
+                  <span class="text-muted">Username</span>
+                  <span class="fw-semibold text-dark">{{ user.username }}</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-2 small">
+                  <span class="text-muted">Email</span>
+                  <span class="fw-semibold text-dark">{{ user.email }}</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-2 small">
+                  <span class="text-muted">Registered On</span>
+                  <span class="fw-semibold text-dark">{{ user.date_joined|date:"M d, Y" }}</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-2 small">
+                  <span class="text-muted">Account Type</span>
+                  <span class="badge bg-light text-dark border">
+                    Standard Driver
+                  </span>
+                </li>
+              </ul>
+
+              <div class="d-grid gap-2">
+                <a href="{% url 'location_list' %}" class="btn btn-pe-accent btn-sm shadow-sm">
+                  <i class="bi bi-search me-1"></i> Find Parking Spot
+                </a>
+                <a href="{% url 'create_booking' %}" class="btn btn-outline-pe-primary btn-sm">
+                  <i class="bi bi-calendar-plus me-1"></i> Book a Parking Slot
+                </a>
+                <a href="{% url 'my_bookings' %}" class="btn btn-outline-secondary btn-sm">
+                  <i class="bi bi-journal-text me-1"></i> View Booking History
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+
+  </div>
+</section>
+{% endblock %}

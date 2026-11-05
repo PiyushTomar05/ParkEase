@@ -1,0 +1,309 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <meta name="description" content="ParkEase - Cost-Effective Smart Parking Management System. Reserve parking slots, monitor live availability, and optimize urban parking.">
+  <title>{% block title %}ParkEase - Smart Parking Management{% endblock %}</title>
+
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+  <!-- Responsive Navigation Bar -->
+  <header>
+    <nav class="navbar navbar-expand-lg pe-navbar sticky-top">
+      <div class="container">
+        <!-- Brand Logo and Name -->
+        <a class="pe-brand" href="{% if user.is_authenticated and user.is_staff %}{% url 'operations_dashboard' %}{% else %}{% url 'home' %}{% endif %}">
+          <div class="pe-brand-icon">
+            <i class="bi bi-p-square-fill"></i>
+          </div>
+          <span>ParkEase</span>
+        </a>
+
+        <!-- Mobile Toggler -->
+        <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMainCollapse" aria-controls="navbarMainCollapse" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <!-- Navbar Links -->
+        <div class="collapse navbar-collapse" id="navbarMainCollapse">
+          <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4">
+            {% if user.is_authenticated and user.is_staff %}
+              <!-- Staff / Administrator Navigation: strictly operational -->
+              <li class="nav-item">
+                <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}">
+                  <i class="bi bi-speedometer2 me-1"></i> Dashboard
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link {% if request.resolver_match.url_name == 'operations_dashboard' %}active{% endif %}" href="{% url 'operations_dashboard' %}">
+                  <i class="bi bi-activity me-1"></i> Parking Operations
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link {% if 'manage_' in request.resolver_match.url_name or 'add_' in request.resolver_match.url_name or 'edit_' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'manage_locations' %}">
+                  <i class="bi bi-kanban me-1"></i> Manage Parking
+                </a>
+              </li>
+            {% elif user.is_authenticated %}
+              <!-- Customer / Driver Navigation -->
+              <li class="nav-item">
+                <a class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}" aria-current="page" href="{% url 'home' %}">
+                  <i class="bi bi-house-door me-1"></i> Home
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link {% if request.resolver_match.url_name == 'location_list' or request.resolver_match.url_name == 'location_detail' %}active{% endif %}" href="{% url 'location_list' %}">
+                  <i class="bi bi-geo-alt me-1"></i> Find Parking
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}">
+                  <i class="bi bi-speedometer2 me-1"></i> Dashboard
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link {% if request.resolver_match.url_name == 'my_bookings' or request.resolver_match.url_name == 'booking_detail' or request.resolver_match.url_name == 'create_booking' %}active{% endif %}" href="{% url 'my_bookings' %}">
+                  <i class="bi bi-journal-text me-1"></i> My Bookings
+                </a>
+              </li>
+            {% else %}
+              <!-- Anonymous Guest Navigation -->
+              <li class="nav-item">
+                <a class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}" aria-current="page" href="{% url 'home' %}">
+                  <i class="bi bi-house-door me-1"></i> Home
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link {% if request.resolver_match.url_name == 'location_list' or request.resolver_match.url_name == 'location_detail' %}active{% endif %}" href="{% url 'location_list' %}">
+                  <i class="bi bi-geo-alt me-1"></i> Find Parking
+                </a>
+              </li>
+            {% endif %}
+          </ul>
+
+          <!-- Authentication Navigation Options -->
+          <div class="d-flex align-items-center gap-2 mt-3 mt-lg-0">
+            {% if user.is_authenticated %}
+              <!-- Authenticated User Menu -->
+              <div class="dropdown">
+                <button class="btn btn-outline-pe-primary dropdown-toggle d-flex align-items-center gap-2" type="button" id="userMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+                  <i class="bi bi-person-circle text-success"></i>
+                  <span>{{ user.username }}</span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 mt-2" aria-labelledby="userMenuButton">
+                  <li>
+                    <h6 class="dropdown-header text-muted pb-1">
+                      Signed in as <strong>{{ user.username }}</strong>
+                      <span class="d-block small text-primary fw-semibold mt-1">
+                        {% if user.is_superuser %}
+                          <i class="bi bi-shield-lock-fill me-1"></i> System Administrator
+                        {% elif user.is_staff %}
+                          <i class="bi bi-shield-shaded me-1"></i> Staff Administrator
+                        {% else %}
+                          <i class="bi bi-person-fill me-1"></i> Customer / Driver
+                        {% endif %}
+                      </span>
+                    </h6>
+                  </li>
+                  <li><hr class="dropdown-divider my-1"></li>
+                  <li>
+                    <a class="dropdown-item py-2" href="{% url 'dashboard' %}">
+                      <i class="bi bi-speedometer2 me-2 text-primary"></i> Dashboard
+                    </a>
+                  </li>
+                  {% if user.is_staff %}
+                    <li>
+                      <a class="dropdown-item py-2" href="{% url 'operations_dashboard' %}">
+                        <i class="bi bi-activity me-2 text-primary"></i> Parking Operations
+                      </a>
+                    </li>
+                    <li>
+                      <a class="dropdown-item py-2" href="{% url 'manage_locations' %}">
+                        <i class="bi bi-kanban me-2 text-success"></i> Manage Parking
+                      </a>
+                    </li>
+                    {% if user.is_superuser %}
+                      <li>
+                        <a class="dropdown-item py-2" href="{% url 'admin:index' %}">
+                          <i class="bi bi-gear me-2 text-secondary"></i> Admin Panel
+                        </a>
+                      </li>
+                    {% endif %}
+                    <li><hr class="dropdown-divider my-1"></li>
+                    <li>
+                      <a class="dropdown-item py-2 text-muted" href="{% url 'home' %}">
+                        <i class="bi bi-box-arrow-up-right me-2"></i> View Public Site
+                      </a>
+                    </li>
+                  {% else %}
+                    <li>
+                      <a class="dropdown-item py-2" href="{% url 'my_bookings' %}">
+                        <i class="bi bi-journal-text me-2 text-success"></i> My Bookings
+                      </a>
+                    </li>
+                    <li>
+                      <a class="dropdown-item py-2" href="{% url 'create_booking' %}">
+                        <i class="bi bi-calendar-plus me-2 text-info"></i> Book a Slot
+                      </a>
+                    </li>
+                  {% endif %}
+                  <li><hr class="dropdown-divider my-1"></li>
+                  <li>
+                    <form method="post" action="{% url 'logout' %}" class="m-0 p-0">
+                      {% csrf_token %}
+                      <button type="submit" class="dropdown-item py-2 text-danger d-flex align-items-center w-100 border-0 bg-transparent">
+                        <i class="bi bi-box-arrow-right me-2"></i> Logout
+                      </button>
+                    </form>
+                  </li>
+                </ul>
+              </div>
+            {% else %}
+              <!-- Guest User Navigation -->
+              <a class="btn btn-outline-pe-primary btn-sm px-3" href="{% url 'login' %}">
+                <i class="bi bi-box-arrow-in-right me-1"></i> Login
+              </a>
+              <a class="btn btn-pe-accent btn-sm px-3" href="{% url 'register' %}">
+                <i class="bi bi-person-plus me-1"></i> Register
+              </a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Django Messages Notification Area -->
+  <div class="container pe-messages-container">
+    {% if messages %}
+      <div class="row justify-content-center">
+        <div class="col-12 col-lg-10">
+          {% for message in messages %}
+            <div class="alert alert-{% if 'error' in message.tags %}danger{% else %}{{ message.tags|default:'info' }}{% endif %} alert-dismissible fade show pe-alert d-flex align-items-center justify-content-between shadow-sm mb-3" role="alert">
+              <div class="d-flex align-items-center">
+                {% if 'success' in message.tags %}
+                  <i class="bi bi-check-circle-fill me-2 fs-5 flex-shrink-0 text-success"></i>
+                {% elif 'error' in message.tags or 'danger' in message.tags %}
+                  <i class="bi bi-exclamation-triangle-fill me-2 fs-5 flex-shrink-0 text-danger"></i>
+                {% elif 'warning' in message.tags %}
+                  <i class="bi bi-exclamation-circle-fill me-2 fs-5 flex-shrink-0 text-warning"></i>
+                {% else %}
+                  <i class="bi bi-info-circle-fill me-2 fs-5 flex-shrink-0 text-primary"></i>
+                {% endif %}
+                <span class="small fw-semibold">{{ message }}</span>
+              </div>
+              <button type="button" class="btn-close ms-3 position-static flex-shrink-0" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Main Content Block -->
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Footer -->
+  <footer class="pe-footer">
+    <div class="container">
+      <div class="row g-4 justify-content-between">
+        <div class="col-lg-4 col-md-6">
+          <a class="pe-footer-brand" href="{% url 'home' %}">
+            <div class="pe-brand-icon">
+              <i class="bi bi-p-square-fill"></i>
+            </div>
+            <span>ParkEase</span>
+          </a>
+          <p class="small text-secondary mb-3">
+            A cost-effective smart parking management system engineered to maximize lot occupancy, streamline booking, and eliminate urban congestion.
+          </p>
+          <div class="d-flex gap-3 text-secondary">
+            <span><i class="bi bi-shield-check text-success me-1"></i> Secure</span>
+            <span><i class="bi bi-lightning-charge text-warning me-1"></i> Fast</span>
+            <span><i class="bi bi-cash-stack text-info me-1"></i> Affordable</span>
+          </div>
+        </div>
+
+        <div class="col-lg-2 col-md-3 col-6">
+          <h6>Navigation</h6>
+          <ul class="pe-footer-links small">
+            <li><a href="{% url 'home' %}">Home</a></li>
+            <li><a href="{% url 'location_list' %}">Find Parking</a></li>
+            <li><a href="{% url 'home' %}#features">Features</a></li>
+            <li><a href="{% url 'home' %}#how-it-works">How It Works</a></li>
+          </ul>
+        </div>
+
+        <div class="col-lg-3 col-md-3 col-6">
+          <h6>System Access</h6>
+          <ul class="pe-footer-links small">
+            {% if user.is_authenticated %}
+              <li><a href="{% url 'dashboard' %}">My Dashboard</a></li>
+              {% if user.is_staff %}
+                <li><a href="{% url 'operations_dashboard' %}">Parking Operations</a></li>
+                <li><a href="{% url 'manage_locations' %}">Manage Parking</a></li>
+                <li><a href="{% url 'admin:index' %}">Django Admin</a></li>
+              {% endif %}
+              <li>
+                <form method="post" action="{% url 'logout' %}" class="d-inline">
+                  {% csrf_token %}
+                  <button type="submit" class="p-0 border-0 bg-transparent small text-secondary" style="cursor: pointer;">
+                    Log Out
+                  </button>
+                </form>
+              </li>
+            {% else %}
+              <li><a href="{% url 'login' %}">User Login</a></li>
+              <li><a href="{% url 'register' %}">Register Account</a></li>
+              <li><a href="{% url 'admin:index' %}">Staff Administration</a></li>
+            {% endif %}
+          </ul>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+          <h6>Project Info</h6>
+          <p class="small text-secondary mb-2">
+            7th Semester Academic Capstone Project
+          </p>
+          <p class="small text-secondary mb-0">
+            <strong>Architecture:</strong> Django 6.1 • SQLite • Bootstrap 5
+          </p>
+        </div>
+      </div>
+
+      <div class="pe-footer-bottom d-flex flex-column flex-md-row justify-content-between align-items-center text-secondary">
+        <p class="mb-2 mb-md-0">
+          &copy; 2026 ParkEase — Smart Parking Management System. All rights reserved.
+        </p>
+        <div class="d-flex gap-3">
+          <span class="small">Academic Demonstration Project</span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Bootstrap 5 JavaScript Bundle -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+
+  <!-- Custom Main JavaScript -->
+  <script src="{% static 'js/main.js' %}"></script>
+
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

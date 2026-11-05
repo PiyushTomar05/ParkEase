@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Manage Parking Locations — ParkEase Staff{% endblock %}
+
+{% block content %}
+<section class="py-4 py-lg-5 bg-light">
+  <div class="container">
+
+    <!-- Header & Action Row -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+      <div>
+        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-3 py-1 mb-2 fw-semibold">
+          <i class="bi bi-shield-lock-fill me-1"></i> Staff Administration
+        </span>
+        <h1 class="h2 fw-bold text-dark mb-1">Parking Locations Management</h1>
+        <p class="text-muted mb-0">Create, configure, and monitor all smart parking facilities.</p>
+      </div>
+      <div>
+        <a href="{% url 'add_location' %}" class="btn btn-pe-accent shadow-sm px-4">
+          <i class="bi bi-plus-circle me-1"></i> Add Parking Location
+        </a>
+      </div>
+    </div>
+
+    <!-- Locations Table or Empty State -->
+    <div class="card border rounded-4 shadow-sm bg-white overflow-hidden">
+      <div class="card-header bg-white border-bottom py-3 px-4 d-flex justify-content-between align-items-center">
+        <h5 class="fw-bold mb-0 text-dark">
+          <i class="bi bi-building me-2 text-primary"></i> Registered Locations ({{ total_locations }})
+        </h5>
+        <a href="{% url 'location_list' %}" class="small text-decoration-none fw-semibold">
+          <i class="bi bi-eye me-1"></i> Public Directory View
+        </a>
+      </div>
+
+      <div class="card-body p-0">
+        {% if locations_list %}
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light small text-secondary">
+                <tr>
+                  <th scope="col" class="ps-4">Facility Name & Address</th>
+                  <th scope="col">Hourly Rate</th>
+                  <th scope="col">Hours</th>
+                  <th scope="col">Slots (Configured / Target)</th>
+                  <th scope="col">Status</th>
+                  <th scope="col" class="text-end pe-4">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for item in locations_list %}
+                  <tr>
+                    <!-- Name & Address -->
+                    <td class="ps-4 py-3">
+                      <div class="fw-bold text-dark">
+                        <a href="{% url 'location_detail' pk=item.location.pk %}" class="text-decoration-none text-dark">
+                          {{ item.location.name }}
+                        </a>
+                      </div>
+                      <small class="text-muted"><i class="bi bi-geo-alt me-1"></i>{{ item.location.address|truncatewords:8 }}</small>
+                    </td>
+
+                    <!-- Hourly Rate -->
+                    <td>
+                      <span class="fw-semibold text-dark">₹{{ item.location.hourly_rate }}</span>
+                      <small class="text-muted">/hr</small>
+                    </td>
+
+                    <!-- Operating Hours -->
+                    <td>
+                      <small class="text-secondary fw-semibold">
+                        {{ item.location.opening_time|time:"H:i" }} – {{ item.location.closing_time|time:"H:i" }}
+                      </small>
+                    </td>
+
+                    <!-- Slots Count -->
+                    <td>
+                      <div class="fw-bold text-dark">{{ item.configured_slots }} <small class="text-muted">/ {{ item.location.total_slots }}</small></div>
+                      <small class="text-success">{{ item.active_slots }} active</small>
+                    </td>
+
+                    <!-- Status -->
+                    <td>
+                      {% if item.location.is_active %}
+                        <span class="pe-status-badge pe-status-active"><i class="bi bi-check-circle-fill"></i> Active</span>
+                      {% else %}
+                        <span class="pe-status-badge pe-status-completed"><i class="bi bi-dash-circle"></i> Inactive</span>
+                      {% endif %}
+                    </td>
+
+                    <!-- Actions -->
+                    <td class="text-end pe-4">
+                      <div class="d-inline-flex gap-1">
+                        <!-- View -->
+                        <a href="{% url 'location_detail' pk=item.location.pk %}" class="btn btn-outline-secondary btn-sm" title="View Detail Grid">
+                          <i class="bi bi-eye"></i>
+                        </a>
+
+                        <!-- Manage Slots -->
+                        <a href="{% url 'manage_slots' location_id=item.location.pk %}" class="btn btn-outline-pe-primary btn-sm" title="Manage Slots">
+                          <i class="bi bi-grid-fill me-1"></i> Slots
+                        </a>
+
+                        <!-- Edit -->
+                        <a href="{% url 'edit_location' pk=item.location.pk %}" class="btn btn-outline-secondary btn-sm" title="Edit Facility">
+                          <i class="bi bi-pencil-square"></i>
+                        </a>
+
+                        <!-- Toggle Active Status Form (POST) -->
+                        <form method="post" action="{% url 'toggle_location_status' pk=item.location.pk %}" class="d-inline" onsubmit="return confirm('Are you sure you want to {% if item.location.is_active %}deactivate{% else %}activate{% endif %} {{ item.location.name }}?');">
+                          {% csrf_token %}
+                          {% if item.location.is_active %}
+                            <button type="submit" class="btn btn-outline-danger btn-sm" title="Deactivate Location">
+                              <i class="bi bi-slash-circle"></i>
+                            </button>
+                          {% else %}
+                            <button type="submit" class="btn btn-outline-success btn-sm" title="Activate Location">
+                              <i class="bi bi-check-circle"></i>
+                            </button>
+                          {% endif %}
+                        </form>
+                      </div>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <!-- Empty State -->
+          <div class="pe-empty-state py-4">
+            <div class="pe-empty-icon">
+              <i class="bi bi-building"></i>
+            </div>
+            <h4 class="pe-empty-title">No Parking Locations Registered</h4>
+            <p class="pe-empty-text">
+              Get started by adding your first municipal, commercial, or residential smart parking facility.
+            </p>
+            <a href="{% url 'add_location' %}" class="btn btn-pe-accent px-4 shadow-sm">
+              <i class="bi bi-plus-circle me-1"></i> Add First Location
+            </a>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+</section>
+{% endblock %}
+

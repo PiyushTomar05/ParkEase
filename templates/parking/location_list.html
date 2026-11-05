@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Find Parking Locations — ParkEase{% endblock %}
+
+{% block content %}
+<section class="py-5 bg-light">
+  <div class="container">
+
+    <!-- Page Header and Search -->
+    <div class="row align-items-center mb-4 g-3">
+      <div class="col-md-7">
+        <span class="badge badge-pe-soft rounded-pill px-3 py-1 mb-2">
+          <i class="bi bi-geo-alt-fill me-1"></i> Smart Facilities
+        </span>
+        <h1 class="h2 fw-bold text-dark mb-1">Explore Parking Facilities</h1>
+        <p class="text-muted mb-0">Browse real-time parking locations and inspect live slot availability.</p>
+      </div>
+      <div class="col-md-5">
+        <form method="get" action="{% url 'location_list' %}" class="d-flex gap-2">
+          <div class="input-group">
+            <span class="input-group-text bg-white border-end-0 text-muted">
+              <i class="bi bi-search"></i>
+            </span>
+            <input type="text" name="q" class="form-control border-start-0" placeholder="Search by name or address..." value="{{ search_query }}">
+          </div>
+          <button type="submit" class="btn btn-pe-primary px-3">Search</button>
+          {% if search_query %}
+            <a href="{% url 'location_list' %}" class="btn btn-outline-secondary" title="Clear search">
+              <i class="bi bi-x-lg"></i>
+            </a>
+          {% endif %}
+        </form>
+      </div>
+    </div>
+
+    <!-- Location Cards Grid or Empty State -->
+    {% if locations_data %}
+      <div class="row g-4">
+        {% for item in locations_data %}
+          <div class="col-md-6 col-lg-4">
+            <div class="card h-100 border rounded-4 shadow-sm bg-white overflow-hidden d-flex flex-column">
+              <div class="card-body p-4 d-flex flex-column">
+                
+                <!-- Card Header: Title & Hourly Rate Badge -->
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                  <h4 class="h5 fw-bold text-dark mb-0">{{ item.location.name }}</h4>
+                  <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1 fw-bold fs-6">
+                    ₹{{ item.location.hourly_rate }}<small class="fw-normal">/hr</small>
+                  </span>
+                </div>
+
+                <!-- Address -->
+                <p class="small text-muted mb-2">
+                  <i class="bi bi-geo-alt text-danger me-1"></i> {{ item.location.address }}
+                </p>
+
+                <!-- Description -->
+                {% if item.location.description %}
+                  <p class="small text-secondary mb-3 text-truncate-2">
+                    {{ item.location.description }}
+                  </p>
+                {% else %}
+                  <p class="small text-muted fst-italic mb-3">
+                    Standard smart facility with automated check-in and barrier control.
+                  </p>
+                {% endif %}
+
+                <!-- Timing & Capacity Metrics -->
+                <div class="p-3 rounded-3 bg-light border mb-3 mt-auto">
+                  <div class="d-flex justify-content-between small text-secondary mb-2">
+                    <span><i class="bi bi-clock me-1 text-primary"></i> Operating Hours</span>
+                    <span class="fw-semibold text-dark">
+                      {{ item.location.opening_time|time:"H:i" }} – {{ item.location.closing_time|time:"H:i" }}
+                    </span>
+                  </div>
+                  <div class="d-flex justify-content-between small text-secondary mb-2">
+                    <span><i class="bi bi-grid-3x3-gap me-1 text-info"></i> Total Capacity</span>
+                    <span class="fw-semibold text-dark">{{ item.total_slots }} Slots</span>
+                  </div>
+                  <div class="d-flex justify-content-between small text-secondary">
+                    <span><i class="bi bi-check2-circle me-1 text-success"></i> Available Now</span>
+                    {% if item.available_slots_count > 0 %}
+                      <span class="badge bg-success-subtle text-success border border-success-subtle fw-bold">
+                        {{ item.available_slots_count }} Open
+                      </span>
+                    {% else %}
+                      <span class="badge bg-danger-subtle text-danger border border-danger-subtle fw-bold">
+                        Fully Booked
+                      </span>
+                    {% endif %}
+                  </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="d-flex gap-2 mt-2">
+                  <a href="{% url 'location_detail' pk=item.location.pk %}" class="btn btn-outline-pe-primary flex-fill btn-sm d-flex align-items-center justify-content-center gap-1">
+                    <i class="bi bi-grid-3x3"></i>
+                    <span>View Bays</span>
+                  </a>
+                  {% if item.available_slots_count > 0 %}
+                    <a href="{% url 'create_booking' %}?location={{ item.location.pk }}" class="btn btn-pe-accent flex-fill btn-sm d-flex align-items-center justify-content-center gap-1 shadow-sm">
+                      <i class="bi bi-calendar-plus"></i>
+                      <span>Book Slot</span>
+                    </a>
+                  {% else %}
+                    <button class="btn btn-light border text-muted flex-fill btn-sm" disabled>
+                      <span>Full</span>
+                    </button>
+                  {% endif %}
+                </div>
+
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <!-- Friendly Empty State -->
+      <div class="card border rounded-4 bg-white shadow-sm p-4 p-md-5 text-center my-4">
+        <div class="pe-empty-state py-3">
+          <div class="pe-empty-icon">
+            <i class="bi bi-geo-alt"></i>
+          </div>
+          <h3 class="pe-empty-title">No Parking Locations Found</h3>
+          {% if search_query %}
+            <p class="pe-empty-text">
+              No facilities matched your search for "<strong>{{ search_query }}</strong>". Try searching with a different area name or clear the filter.
+            </p>
+            <div>
+              <a href="{% url 'location_list' %}" class="btn btn-outline-pe-primary px-4">
+                <i class="bi bi-x-circle me-1"></i> Clear Search Filter
+              </a>
+            </div>
+          {% else %}
+            <p class="pe-empty-text">
+              There are currently no active parking locations registered in the ParkEase system. Please check back shortly or contact our administrator team.
+            </p>
+            {% if user.is_staff %}
+              <div>
+                <a href="{% url 'add_location' %}" class="btn btn-pe-accent px-4 shadow-sm">
+                  <i class="bi bi-plus-circle me-1"></i> Add Parking Location
+                </a>
+              </div>
+            {% endif %}
+          {% endif %}
+        </div>
+      </div>
+    {% endif %}
+
+  </div>
+</section>
+{% endblock %}
+

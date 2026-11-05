@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} — ParkEase{% endblock %}
+
+{% block content %}
+<section class="py-5 bg-light">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-md-8 col-lg-6 col-xl-5">
+
+        <!-- Breadcrumb Navigation -->
+        <nav aria-label="breadcrumb" class="mb-3">
+          <ol class="breadcrumb small">
+            <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'manage_locations' %}">Locations</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'manage_slots' location_id=location.pk %}">{{ location.name }} Slots</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{% if is_edit %}Edit Slot{% else %}Add Slot{% endif %}</li>
+          </ol>
+        </nav>
+
+        <!-- Slot Form Card -->
+        <div class="card border rounded-4 shadow-sm bg-white p-4 p-md-5">
+          <div class="d-flex align-items-center gap-3 mb-4 pb-3 border-bottom">
+            <div class="pe-brand-icon" style="width: 48px; height: 48px; font-size: 1.5rem;">
+              <i class="bi bi-grid-fill"></i>
+            </div>
+            <div>
+              <h2 class="h5 fw-bold text-dark mb-0">{{ title }}</h2>
+              <small class="text-muted"><i class="bi bi-building me-1"></i> {{ location.name }}</small>
+            </div>
+          </div>
+
+          <!-- Non-field Errors -->
+          {% if form.non_field_errors %}
+            <div class="alert alert-danger py-2 px-3 mb-3 small rounded-3" role="alert">
+              {% for error in form.non_field_errors %}
+                <div class="d-flex align-items-center">
+                  <i class="bi bi-exclamation-triangle-fill me-2 flex-shrink-0"></i>
+                  <span>{{ error }}</span>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          <form method="post" novalidate>
+            {% csrf_token %}
+
+            <!-- Slot Number -->
+            <div class="mb-3">
+              <label for="{{ form.slot_number.id_for_label }}" class="form-label fw-semibold small text-secondary">
+                Slot Designation / Number <span class="text-danger">*</span>
+              </label>
+              <div class="input-group">
+                <span class="input-group-text bg-light text-muted border-end-0">
+                  <i class="bi bi-123"></i>
+                </span>
+                {{ form.slot_number }}
+              </div>
+              {% if form.slot_number.errors %}
+                {% for error in form.slot_number.errors %}
+                  <div class="pe-field-error"><i class="bi bi-exclamation-circle-fill"></i> {{ error }}</div>
+                {% endfor %}
+              {% else %}
+                <div class="form-text small text-muted">
+                  Must be unique within {{ location.name }} (e.g. A-01, B-05, C-12).
+                </div>
+              {% endif %}
+            </div>
+
+            <!-- Slot Type -->
+            <div class="mb-3">
+              <label for="{{ form.slot_type.id_for_label }}" class="form-label fw-semibold small text-secondary">
+                Permitted Vehicle Type <span class="text-danger">*</span>
+              </label>
+              {{ form.slot_type }}
+              {% if form.slot_type.errors %}
+                {% for error in form.slot_type.errors %}
+                  <div class="pe-field-error"><i class="bi bi-exclamation-circle-fill"></i> {{ error }}</div>
+                {% endfor %}
+              {% endif %}
+            </div>
+
+            <!-- Active Status Checkbox -->
+            <div class="form-check form-switch mb-4 p-3 bg-light rounded-3 border">
+              <div class="d-flex align-items-center">
+                {{ form.is_active }}
+                <label class="form-check-label ms-2 fw-semibold small text-dark mb-0" for="{{ form.is_active.id_for_label }}">
+                  Slot is active and operational
+                </label>
+              </div>
+              <small class="text-muted d-block ms-4 ps-2 mt-1">
+                Deactivated slots appear grayed out and cannot be reserved by drivers.
+              </small>
+            </div>
+
+            <!-- Submit / Cancel Action Buttons -->
+            <div class="d-flex justify-content-end gap-2 pt-2 border-top">
+              <a href="{% url 'manage_slots' location_id=location.pk %}" class="btn btn-outline-secondary px-4">
+                Cancel
+              </a>
+              <button type="submit" class="btn btn-pe-accent px-4 shadow-sm">
+                <i class="bi bi-check2-circle me-1"></i> Save Slot
+              </button>
+            </div>
+
+          </form>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+

@@ -1,0 +1,187 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} — ParkEase{% endblock %}
+
+{% block content %}
+<section class="py-5 bg-light">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-8 col-xl-7">
+
+        <!-- Breadcrumb Navigation -->
+        <nav aria-label="breadcrumb" class="mb-3">
+          <ol class="breadcrumb small">
+            <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'manage_locations' %}">Manage Locations</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{% if is_edit %}Edit Facility{% else %}New Facility{% endif %}</li>
+          </ol>
+        </nav>
+
+        <!-- Location Form Card -->
+        <div class="card border rounded-4 shadow-sm bg-white p-4 p-md-5">
+          <div class="d-flex align-items-center gap-3 mb-4 pb-3 border-bottom">
+            <div class="pe-brand-icon" style="width: 48px; height: 48px; font-size: 1.5rem;">
+              <i class="bi bi-building-add"></i>
+            </div>
+            <div>
+              <h2 class="h4 fw-bold text-dark mb-0">{{ title }}</h2>
+              <small class="text-muted">Fill in facility specifications, slots, operating schedule, and pricing.</small>
+            </div>
+          </div>
+
+          <!-- Non-field Errors -->
+          {% if form.non_field_errors %}
+            <div class="alert alert-danger py-2 px-3 mb-3 small rounded-3" role="alert">
+              {% for error in form.non_field_errors %}
+                <div class="d-flex align-items-center">
+                  <i class="bi bi-exclamation-triangle-fill me-2 flex-shrink-0"></i>
+                  <span>{{ error }}</span>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          <form method="post" novalidate>
+            {% csrf_token %}
+
+            <!-- Location Name -->
+            <div class="mb-3">
+              <label for="{{ form.name.id_for_label }}" class="form-label fw-semibold small text-secondary">
+                Facility Name <span class="text-danger">*</span>
+              </label>
+              <div class="input-group">
+                <span class="input-group-text bg-light text-muted border-end-0">
+                  <i class="bi bi-building"></i>
+                </span>
+                {{ form.name }}
+              </div>
+              {% if form.name.errors %}
+                {% for error in form.name.errors %}
+                  <div class="pe-field-error"><i class="bi bi-exclamation-circle-fill"></i> {{ error }}</div>
+                {% endfor %}
+              {% endif %}
+            </div>
+
+            <!-- Address -->
+            <div class="mb-3">
+              <label for="{{ form.address.id_for_label }}" class="form-label fw-semibold small text-secondary">
+                Full Physical Address <span class="text-danger">*</span>
+              </label>
+              {{ form.address }}
+              {% if form.address.errors %}
+                {% for error in form.address.errors %}
+                  <div class="pe-field-error"><i class="bi bi-exclamation-circle-fill"></i> {{ error }}</div>
+                {% endfor %}
+              {% endif %}
+            </div>
+
+            <!-- Description -->
+            <div class="mb-3">
+              <label for="{{ form.description.id_for_label }}" class="form-label fw-semibold small text-secondary">
+                Description &amp; Amenities <span class="text-muted fw-normal">(Optional)</span>
+              </label>
+              {{ form.description }}
+              {% if form.description.errors %}
+                {% for error in form.description.errors %}
+                  <div class="pe-field-error"><i class="bi bi-exclamation-circle-fill"></i> {{ error }}</div>
+                {% endfor %}
+              {% endif %}
+            </div>
+
+            <!-- Total Slots & Hourly Rate Row -->
+            <div class="row g-3 mb-3">
+              <div class="col-sm-6">
+                <label for="{{ form.total_slots.id_for_label }}" class="form-label fw-semibold small text-secondary">
+                  Total Slots Capacity <span class="text-danger">*</span>
+                </label>
+                <div class="input-group">
+                  <span class="input-group-text bg-light text-muted border-end-0">
+                    <i class="bi bi-grid-3x3-gap"></i>
+                  </span>
+                  {{ form.total_slots }}
+                </div>
+                {% if form.total_slots.errors %}
+                  {% for error in form.total_slots.errors %}
+                    <div class="pe-field-error"><i class="bi bi-exclamation-circle-fill"></i> {{ error }}</div>
+                  {% endfor %}
+                {% endif %}
+              </div>
+
+              <div class="col-sm-6">
+                <label for="{{ form.hourly_rate.id_for_label }}" class="form-label fw-semibold small text-secondary">
+                  Hourly Rate (₹) <span class="text-danger">*</span>
+                </label>
+                <div class="input-group">
+                  <span class="input-group-text bg-light text-muted border-end-0">
+                    <i class="bi bi-currency-rupee"></i>
+                  </span>
+                  {{ form.hourly_rate }}
+                </div>
+                {% if form.hourly_rate.errors %}
+                  {% for error in form.hourly_rate.errors %}
+                    <div class="pe-field-error"><i class="bi bi-exclamation-circle-fill"></i> {{ error }}</div>
+                  {% endfor %}
+                {% endif %}
+              </div>
+            </div>
+
+            <!-- Operating Hours Row -->
+            <div class="row g-3 mb-4">
+              <div class="col-sm-6">
+                <label for="{{ form.opening_time.id_for_label }}" class="form-label fw-semibold small text-secondary">
+                  Opening Time <span class="text-danger">*</span>
+                </label>
+                {{ form.opening_time }}
+                {% if form.opening_time.errors %}
+                  {% for error in form.opening_time.errors %}
+                    <div class="pe-field-error"><i class="bi bi-exclamation-circle-fill"></i> {{ error }}</div>
+                  {% endfor %}
+                {% endif %}
+              </div>
+
+              <div class="col-sm-6">
+                <label for="{{ form.closing_time.id_for_label }}" class="form-label fw-semibold small text-secondary">
+                  Closing Time <span class="text-danger">*</span>
+                </label>
+                {{ form.closing_time }}
+                {% if form.closing_time.errors %}
+                  {% for error in form.closing_time.errors %}
+                    <div class="pe-field-error"><i class="bi bi-exclamation-circle-fill"></i> {{ error }}</div>
+                  {% endfor %}
+                {% endif %}
+              </div>
+            </div>
+
+            <!-- Active Status Checkbox -->
+            <div class="form-check form-switch mb-4 p-3 bg-light rounded-3 border">
+              <div class="d-flex align-items-center">
+                {{ form.is_active }}
+                <label class="form-check-label ms-2 fw-semibold small text-dark mb-0" for="{{ form.is_active.id_for_label }}">
+                  Facility is active and visible for driver booking
+                </label>
+              </div>
+              <small class="text-muted d-block ms-4 ps-2 mt-1">
+                Deactivating immediately hides this location from the public directory.
+              </small>
+            </div>
+
+            <!-- Submit / Cancel Action Buttons -->
+            <div class="d-flex justify-content-end gap-2 pt-2 border-top">
+              <a href="{% url 'manage_locations' %}" class="btn btn-outline-secondary px-4">
+                Cancel
+              </a>
+              <button type="submit" class="btn btn-pe-primary px-4 shadow-sm">
+                <i class="bi bi-check2-circle me-1"></i> Save Facility
+              </button>
+            </div>
+
+          </form>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+

@@ -1,0 +1,276 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Booking Pass #{{ booking.id }} — ParkEase{% endblock %}
+
+{% block content %}
+<section class="py-5 bg-light">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-8 col-xl-7">
+
+        <!-- Breadcrumb Navigation -->
+        <nav aria-label="breadcrumb" class="mb-3">
+          <ol class="breadcrumb small">
+            <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'my_bookings' %}">My Bookings</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Pass #{{ booking.id }}</li>
+          </ol>
+        </nav>
+
+        <!-- Booking Pass Card -->
+        <div class="card border rounded-4 shadow-sm bg-white overflow-hidden mb-4">
+          <!-- Pass Header -->
+          <div class="p-4 p-md-5 text-white" style="background: linear-gradient(135deg, var(--pe-primary) 0%, var(--pe-primary-light) 100%);">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+              <div>
+                <span class="badge bg-white bg-opacity-25 text-white rounded-pill px-3 py-1 mb-2 small">
+                  <i class="bi bi-ticket-perforated me-1"></i> Official Parking Pass
+                </span>
+                <h1 class="h3 fw-bold mb-1">Reservation Pass #{{ booking.id }}</h1>
+                <p class="text-white-50 small mb-0">
+                  Created on {{ booking.created_at|date:"M d, Y" }} at {{ booking.created_at|time:"H:i" }}
+                </p>
+              </div>
+              <div class="text-end">
+                {% if booking.status == 'CONFIRMED' %}
+                  <span class="badge bg-primary text-white border border-light px-3 py-2 fs-6">
+                    <i class="bi bi-check2-circle me-1"></i> Confirmed
+                  </span>
+                {% elif booking.status == 'ACTIVE' %}
+                  <span class="badge bg-success text-white border border-light px-3 py-2 fs-6">
+                    <i class="bi bi-play-circle me-1"></i> Active Session
+                  </span>
+                {% elif booking.status == 'COMPLETED' %}
+                  <span class="badge bg-secondary text-white border border-light px-3 py-2 fs-6">
+                    <i class="bi bi-check-all me-1"></i> Completed
+                  </span>
+                {% elif booking.status == 'CANCELLED' %}
+                  <span class="badge bg-danger text-white border border-light px-3 py-2 fs-6">
+                    <i class="bi bi-x-circle me-1"></i> Cancelled
+                  </span>
+                {% else %}
+                  <span class="badge bg-warning text-dark border border-light px-3 py-2 fs-6">
+                    {{ booking.get_status_display }}
+                  </span>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <!-- Pass Details Grid -->
+          <div class="card-body p-4 p-md-5">
+            <div class="row g-4 mb-4 pb-4 border-bottom">
+              
+              <!-- Location Info -->
+              <div class="col-sm-6">
+                <div class="small text-muted fw-semibold text-uppercase mb-1">Parking Facility</div>
+                <h5 class="fw-bold text-dark mb-1">{{ booking.location.name }}</h5>
+                <p class="small text-muted mb-0">
+                  <i class="bi bi-geo-alt text-danger me-1"></i> {{ booking.location.address }}
+                </p>
+              </div>
+
+              <!-- Bay Info -->
+              <div class="col-sm-6">
+                <div class="small text-muted fw-semibold text-uppercase mb-1">Allocated Slot</div>
+                <div class="d-flex align-items-center gap-2">
+                  <div class="pe-brand-icon" style="width: 38px; height: 38px; font-size: 1.25rem;">
+                    {% if booking.vehicle_type == 'CAR' %}
+                      <i class="bi bi-car-front"></i>
+                    {% else %}
+                      <i class="bi bi-bicycle"></i>
+                    {% endif %}
+                  </div>
+                  <div>
+                    <h5 class="fw-bold text-dark mb-0">Bay {{ booking.slot.slot_number }}</h5>
+                    <small class="text-muted">{{ booking.get_vehicle_type_display }} Bay</small>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <div class="row g-4 mb-4 pb-4 border-bottom">
+              
+              <!-- Vehicle Info -->
+              <div class="col-sm-6">
+                <div class="small text-muted fw-semibold text-uppercase mb-1">Vehicle Registration</div>
+                <div class="fw-bold text-dark fs-5 mb-0">{{ booking.vehicle_number }}</div>
+                <small class="badge bg-light text-secondary border mt-1">{{ booking.get_vehicle_type_display }}</small>
+              </div>
+
+              <!-- Driver Account -->
+              <div class="col-sm-6">
+                <div class="small text-muted fw-semibold text-uppercase mb-1">Reserved For</div>
+                <div class="fw-bold text-dark fs-6 mb-0">{{ booking.user.username }}</div>
+                <small class="text-muted">{{ booking.user.email }}</small>
+              </div>
+
+            </div>
+
+            <!-- Schedule & Timing -->
+            <div class="p-3 rounded-3 bg-light border mb-4">
+              <div class="row g-3 text-center text-sm-start">
+                <div class="col-sm-5">
+                  <div class="small text-muted">Reservation Start</div>
+                  <div class="fw-bold text-dark">{{ booking.start_time|date:"M d, Y" }}</div>
+                  <div class="text-primary fw-semibold">{{ booking.start_time|time:"H:i" }}</div>
+                </div>
+                <div class="col-sm-2 text-center d-flex align-items-center justify-content-center">
+                  <i class="bi bi-arrow-right text-muted d-none d-sm-inline fs-4"></i>
+                  <i class="bi bi-arrow-down text-muted d-inline d-sm-none fs-4"></i>
+                </div>
+                <div class="col-sm-5 text-sm-end">
+                  <div class="small text-muted">Reservation End</div>
+                  <div class="fw-bold text-dark">{{ booking.end_time|date:"M d, Y" }}</div>
+                  <div class="text-primary fw-semibold">{{ booking.end_time|time:"H:i" }}</div>
+                </div>
+              </div>
+              <div class="text-center pt-2 mt-2 border-top small text-muted">
+                Total Reserved Duration: <strong>{{ duration_hours }}h {{ duration_minutes }}m</strong>
+              </div>
+            </div>
+
+            {% if booking.actual_entry_time %}
+            <!-- Actual Session Timing -->
+            <div class="p-3 rounded-3 bg-light border mb-4">
+              <div class="d-flex align-items-center gap-2 mb-2">
+                <i class="bi bi-stopwatch text-primary"></i>
+                <span class="small fw-bold text-dark text-uppercase">Actual Parking Session</span>
+              </div>
+              <div class="row g-3 text-center text-sm-start">
+                <div class="col-sm-5">
+                  <div class="small text-muted">Actual Check-In (Entry)</div>
+                  <div class="fw-bold text-dark">{{ booking.actual_entry_time|date:"M d, Y" }}</div>
+                  <div class="text-success fw-semibold">{{ booking.actual_entry_time|time:"H:i:s" }}</div>
+                </div>
+                <div class="col-sm-2 text-center d-flex align-items-center justify-content-center">
+                  <i class="bi bi-arrow-right text-muted d-none d-sm-inline fs-4"></i>
+                  <i class="bi bi-arrow-down text-muted d-inline d-sm-none fs-4"></i>
+                </div>
+                <div class="col-sm-5 text-sm-end">
+                  <div class="small text-muted">Actual Check-Out (Exit)</div>
+                  {% if booking.actual_exit_time %}
+                    <div class="fw-bold text-dark">{{ booking.actual_exit_time|date:"M d, Y" }}</div>
+                    <div class="text-secondary fw-semibold">{{ booking.actual_exit_time|time:"H:i:s" }}</div>
+                  {% else %}
+                    <div class="mt-1">
+                      <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">
+                        <i class="bi bi-record-circle me-1"></i> Currently Parked
+                      </span>
+                    </div>
+                  {% endif %}
+                </div>
+              </div>
+              {% if actual_duration_str %}
+              <div class="text-center pt-2 mt-2 border-top small text-muted">
+                Actual Duration: <strong>{{ actual_duration_str }}</strong>
+              </div>
+              {% endif %}
+            </div>
+            {% endif %}
+
+            <!-- Amount & Pricing Summary -->
+            {% if booking.status == 'COMPLETED' and estimated_amount != booking.total_amount %}
+            <div class="p-3 rounded-3 border bg-success-subtle mb-4">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <div class="fw-semibold text-success-emphasis">Final Billed Parking Fee</div>
+                  <small class="text-muted">Calculated on actual parked duration at ₹{{ booking.location.hourly_rate }}/hr</small>
+                </div>
+                <div class="text-end">
+                  <span class="h3 fw-bold text-success mb-0">₹{{ booking.total_amount }}</span>
+                </div>
+              </div>
+              <div class="pt-2 mt-2 border-top border-success-subtle d-flex justify-content-between small text-muted">
+                <span>Original Estimated Reservation Fee:</span>
+                <span class="fw-semibold">₹{{ estimated_amount }}</span>
+              </div>
+            </div>
+            {% else %}
+            <div class="d-flex justify-content-between align-items-center p-3 rounded-3 border bg-success-subtle mb-4">
+              <div>
+                <div class="fw-semibold text-success-emphasis">
+                  {% if booking.status == 'COMPLETED' %}Total Parking Fee{% else %}Estimated Parking Fee{% endif %}
+                </div>
+                <small class="text-muted">Proportionally computed at ₹{{ booking.location.hourly_rate }}/hour</small>
+              </div>
+              <div class="text-end">
+                <span class="h3 fw-bold text-success mb-0">₹{{ booking.total_amount }}</span>
+              </div>
+            </div>
+            {% endif %}
+
+            <!-- Staff Operational Actions -->
+            {% if user.is_staff and booking.status == 'CONFIRMED' or user.is_staff and booking.status == 'ACTIVE' %}
+            <div class="p-3 rounded-3 bg-white border border-primary-subtle shadow-sm mb-4">
+              <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <div>
+                  <h6 class="fw-bold mb-1 text-dark">
+                    <i class="bi bi-shield-check text-primary me-1"></i> Staff Parking Operations
+                  </h6>
+                  <p class="small text-muted mb-0">
+                    {% if booking.status == 'CONFIRMED' %}
+                      Driver arrived? Initiate check-in to activate Bay {{ booking.slot.slot_number }}.
+                    {% elif booking.status == 'ACTIVE' %}
+                      Vehicle departing? Complete check-out to compute actual fee and release Bay {{ booking.slot.slot_number }}.
+                    {% endif %}
+                  </p>
+                </div>
+                <div>
+                  {% if booking.status == 'CONFIRMED' %}
+                    <form method="post" action="{% url 'check_in_booking' pk=booking.pk %}" onsubmit="return confirm('Confirm check-in for vehicle {{ booking.vehicle_number }}?');">
+                      {% csrf_token %}
+                      <button type="submit" class="btn btn-success btn-sm px-3 shadow-sm">
+                        <i class="bi bi-box-arrow-in-right me-1"></i> Staff Check In
+                      </button>
+                    </form>
+                  {% elif booking.status == 'ACTIVE' %}
+                    <form method="post" action="{% url 'check_out_booking' pk=booking.pk %}" onsubmit="return confirm('Confirm check-out for vehicle {{ booking.vehicle_number }}? Final fee will be calculated based on actual parked duration.');">
+                      {% csrf_token %}
+                      <button type="submit" class="btn btn-warning btn-sm text-dark px-3 shadow-sm">
+                        <i class="bi bi-box-arrow-right me-1"></i> Staff Check Out
+                      </button>
+                    </form>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+            {% endif %}
+
+            <!-- Cancellation and Navigation Actions -->
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 pt-3 border-top">
+              <div class="d-flex flex-wrap gap-2">
+                {% if user.is_staff %}
+                  <a href="{% url 'operations_dashboard' %}" class="btn btn-outline-pe-primary btn-sm">
+                    <i class="bi bi-speedometer2 me-1"></i> Parking Operations
+                  </a>
+                {% endif %}
+                <a href="{% url 'my_bookings' %}" class="btn btn-outline-secondary btn-sm">
+                  <i class="bi bi-arrow-left me-1"></i> My Bookings
+                </a>
+                <a href="{% url 'location_detail' pk=booking.location_id %}" class="btn btn-outline-pe-primary btn-sm">
+                  <i class="bi bi-grid me-1"></i> View Bay Layout
+                </a>
+              </div>
+
+              {% if can_cancel %}
+                <form method="post" action="{% url 'cancel_booking' pk=booking.pk %}" onsubmit="return confirm('Are you sure you want to cancel booking #{{ booking.id }}? This will immediately release the parking slot.');">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-outline-danger btn-sm">
+                    <i class="bi bi-x-circle me-1"></i> Cancel Reservation
+                  </button>
+                </form>
+              {% endif %}
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+

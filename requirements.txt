@@ -1,0 +1,5 @@
+# Core Framework & Dependencies for ParkEase
+Django>=5.1.2
+asgiref>=3.8.1
+sqlparse>=0.5.1
+tzdata>=2024.2

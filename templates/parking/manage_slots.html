@@ -1,0 +1,240 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Manage Slots: {{ location.name }} — ParkEase Staff{% endblock %}
+
+{% block content %}
+<section class="py-4 py-lg-5 bg-light">
+  <div class="container">
+
+    <!-- Breadcrumb & Navigation -->
+    <nav aria-label="breadcrumb" class="mb-3">
+      <ol class="breadcrumb small">
+        <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'manage_locations' %}">Manage Locations</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ location.name }} Slots</li>
+      </ol>
+    </nav>
+
+    <!-- Header Banner -->
+    <div class="card border rounded-4 shadow-sm bg-white overflow-hidden mb-4">
+      <div class="card-body p-4 p-md-5">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+          <div>
+            <div class="d-flex align-items-center gap-2 mb-2">
+              <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-3 py-1 fw-semibold">
+                <i class="bi bi-grid-fill me-1"></i> Slot Layout Management
+              </span>
+              <span class="badge bg-light text-secondary border rounded-pill px-3 py-1">
+                Target Capacity: {{ location.total_slots }} Slots
+              </span>
+            </div>
+            <h1 class="h3 fw-bold text-dark mb-1">{{ location.name }} — Slots</h1>
+            <p class="text-muted small mb-0">
+              <i class="bi bi-geo-alt me-1 text-danger"></i> {{ location.address }} •
+              <span class="text-success fw-semibold">{{ stats.configured_slots }} of {{ location.total_slots }} bays configured</span>
+            </p>
+          </div>
+          <div class="d-flex gap-2">
+            <a href="{% url 'location_detail' pk=location.pk %}" class="btn btn-outline-secondary btn-sm" title="View Customer Layout">
+              <i class="bi bi-eye me-1"></i> View Layout
+            </a>
+            <a href="{% url 'add_slot' location_id=location.pk %}" class="btn btn-pe-accent btn-sm px-3 shadow-sm">
+              <i class="bi bi-plus-circle me-1"></i> Add Parking Slot
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Stats Cards -->
+    <div class="row g-3 mb-4">
+      <div class="col-sm-6 col-lg-3">
+        <div class="stat-card p-3 rounded-4 bg-white border shadow-sm text-center">
+          <small class="text-muted fw-semibold">Configured Bays</small>
+          <h3 class="fw-bold text-dark mt-1 mb-0">{{ stats.configured_slots }}</h3>
+          <small class="text-secondary">Of {{ location.total_slots }} planned</small>
+        </div>
+      </div>
+      <div class="col-sm-6 col-lg-3">
+        <div class="stat-card p-3 rounded-4 bg-white border shadow-sm text-center">
+          <small class="text-muted fw-semibold">Available Right Now</small>
+          <h3 class="fw-bold text-success mt-1 mb-0">{{ stats.available_count }}</h3>
+          <small class="text-secondary">{{ stats.active_slots_count }} active bays</small>
+        </div>
+      </div>
+      <div class="col-sm-6 col-lg-3">
+        <div class="stat-card p-3 rounded-4 bg-white border shadow-sm text-center">
+          <small class="text-muted fw-semibold">Occupied or Reserved</small>
+          <h3 class="fw-bold text-danger mt-1 mb-0">{{ stats.occupied_count|add:stats.reserved_count }}</h3>
+          <small class="text-secondary">{{ stats.occupied_count }} occupied • {{ stats.reserved_count }} reserved</small>
+        </div>
+      </div>
+      <div class="col-sm-6 col-lg-3">
+        <div class="stat-card p-3 rounded-4 bg-white border shadow-sm text-center">
+          <small class="text-muted fw-semibold">Inactive Bays</small>
+          <h3 class="fw-bold text-secondary mt-1 mb-0">{{ stats.inactive_count }}</h3>
+          <small class="text-secondary">Under maintenance</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slots Filter Tabs & Table Card -->
+    <div class="card border rounded-4 shadow-sm bg-white overflow-hidden">
+      <!-- Card Filter Header -->
+      <div class="card-header bg-white border-bottom py-3 px-4 d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <h5 class="fw-bold mb-0 text-dark">
+          <i class="bi bi-list-columns-reverse me-2 text-primary"></i> All Slots in Facility
+        </h5>
+
+        <!-- Filter Pills -->
+        <div class="btn-group btn-group-sm" role="group" aria-label="Slot filters">
+          <a href="{% url 'manage_slots' location_id=location.pk %}" class="btn {% if not slot_type_filter and not status_filter %}btn-pe-primary{% else %}btn-outline-secondary{% endif %}">
+            All
+          </a>
+          <a href="{% url 'manage_slots' location_id=location.pk %}?type=CAR" class="btn {% if slot_type_filter == 'CAR' %}btn-pe-primary{% else %}btn-outline-secondary{% endif %}">
+            <i class="bi bi-car-front-fill me-1"></i> Cars
+          </a>
+          <a href="{% url 'manage_slots' location_id=location.pk %}?type=BIKE" class="btn {% if slot_type_filter == 'BIKE' %}btn-pe-primary{% else %}btn-outline-secondary{% endif %}">
+            <i class="bi bi-bicycle me-1"></i> Bikes
+          </a>
+          <a href="{% url 'manage_slots' location_id=location.pk %}?status=ACTIVE" class="btn {% if status_filter == 'ACTIVE' %}btn-pe-primary{% else %}btn-outline-secondary{% endif %}">
+            Active
+          </a>
+          <a href="{% url 'manage_slots' location_id=location.pk %}?status=INACTIVE" class="btn {% if status_filter == 'INACTIVE' %}btn-pe-primary{% else %}btn-outline-secondary{% endif %}">
+            Inactive
+          </a>
+        </div>
+      </div>
+
+      <!-- Slots Table -->
+      <div class="card-body p-0">
+        {% if slot_data_list %}
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light small text-secondary">
+                <tr>
+                  <th scope="col" class="ps-4">Slot Number</th>
+                  <th scope="col">Vehicle Type</th>
+                  <th scope="col">System Status</th>
+                  <th scope="col">Live Availability</th>
+                  <th scope="col">Active Booking</th>
+                  <th scope="col" class="text-end pe-4">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for item in slot_data_list %}
+                  <tr>
+                    <!-- Slot Number -->
+                    <td class="ps-4 py-3">
+                      <div class="d-flex align-items-center gap-2">
+                        <div class="pe-brand-icon" style="width: 34px; height: 34px; font-size: 1rem;">
+                          {% if item.slot.slot_type == 'CAR' %}
+                            <i class="bi bi-car-front"></i>
+                          {% else %}
+                            <i class="bi bi-bicycle"></i>
+                          {% endif %}
+                        </div>
+                        <span class="fw-bold fs-6 text-dark">{{ item.slot.slot_number }}</span>
+                      </div>
+                    </td>
+
+                    <!-- Type -->
+                    <td>
+                      <span class="badge bg-light text-dark border px-2 py-1">
+                        {{ item.slot.get_slot_type_display }}
+                      </span>
+                    </td>
+
+                    <!-- System Status (is_active) -->
+                    <td>
+                      {% if item.slot.is_active %}
+                        <span class="pe-status-badge pe-status-active"><i class="bi bi-check-circle-fill"></i> Active</span>
+                      {% else %}
+                        <span class="pe-status-badge pe-status-completed"><i class="bi bi-dash-circle"></i> Inactive</span>
+                      {% endif %}
+                    </td>
+
+                    <!-- Live Availability -->
+                    <td>
+                      {% if item.status == 'AVAILABLE' %}
+                        <span class="pe-status-badge pe-status-active"><i class="bi bi-check-circle"></i> Available</span>
+                      {% elif item.status == 'OCCUPIED' %}
+                        <span class="pe-status-badge pe-status-cancelled"><i class="bi bi-car-front-fill"></i> Occupied</span>
+                      {% elif item.status == 'RESERVED' %}
+                        <span class="pe-status-badge pe-status-pending"><i class="bi bi-clock-history"></i> Reserved</span>
+                      {% else %}
+                        <span class="pe-status-badge pe-status-completed"><i class="bi bi-dash-circle"></i> Inactive</span>
+                      {% endif %}
+                    </td>
+
+                    <!-- Current Booking details if occupied/reserved -->
+                    <td>
+                      {% if item.current_booking %}
+                        <div class="small text-dark fw-semibold">
+                          <i class="bi bi-ticket-perforated me-1 text-primary"></i> #{{ item.current_booking.id }}
+                        </div>
+                        <small class="text-muted d-block">{{ item.current_booking.vehicle_number }}</small>
+                      {% else %}
+                        <span class="text-muted small">&mdash;</span>
+                      {% endif %}
+                    </td>
+
+                    <!-- Actions -->
+                    <td class="text-end pe-4">
+                      <div class="d-inline-flex gap-1">
+                        <!-- Edit Slot -->
+                        <a href="{% url 'edit_slot' pk=item.slot.pk %}" class="btn btn-outline-secondary btn-sm" title="Edit Slot Number / Type">
+                          <i class="bi bi-pencil-square"></i>
+                        </a>
+
+                        <!-- Activate / Deactivate Slot Form (POST) -->
+                        <form method="post" action="{% url 'toggle_slot_status' pk=item.slot.pk %}" class="d-inline" onsubmit="return confirm('Toggle active status for slot {{ item.slot.slot_number }}?');">
+                          {% csrf_token %}
+                          {% if item.slot.is_active %}
+                            <button type="submit" class="btn btn-outline-danger btn-sm" title="Deactivate Slot">
+                              <i class="bi bi-slash-circle"></i>
+                            </button>
+                          {% else %}
+                            <button type="submit" class="btn btn-outline-success btn-sm" title="Activate Slot">
+                              <i class="bi bi-check-circle"></i>
+                            </button>
+                          {% endif %}
+                        </form>
+                      </div>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <!-- Empty State -->
+          <div class="pe-empty-state py-4">
+            <div class="pe-empty-icon">
+              <i class="bi bi-grid-3x3"></i>
+            </div>
+            <h5 class="pe-empty-title">No Matching Slots</h5>
+            <p class="pe-empty-text">
+              No parking slots matched your current filter selection, or none have been created yet.
+            </p>
+            <div class="d-flex flex-wrap justify-content-center gap-2">
+              {% if slot_type_filter or status_filter %}
+                <a href="{% url 'manage_slots' location_id=location.pk %}" class="btn btn-outline-secondary btn-sm px-3">
+                  <i class="bi bi-x-circle me-1"></i> Clear Filters
+                </a>
+              {% endif %}
+              <a href="{% url 'add_slot' location_id=location.pk %}" class="btn btn-pe-accent btn-sm px-3 shadow-sm">
+                <i class="bi bi-plus-circle me-1"></i> Add Parking Slot
+              </a>
+            </div>
+          </div>
+        {% endif %}
+      </div>
+
+    </div>
+
+  </div>
+</section>
+{% endblock %}
+
